@@ -4,7 +4,7 @@ import os
 from canvas import Canvas
 from evaluate import evaluate
 
-class TileEditor(tk.Frame):
+class Editor(tk.Frame):
     src_path = "src"
     out_path = "out"
     assets_path = "assets"

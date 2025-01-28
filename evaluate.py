@@ -7,7 +7,6 @@ def evaluate(event, editor):
         command = editor.command_entry.get().strip()
         editor.command_entry.delete(0, tk.END)
         editor.terminal.insert(tk.END, command + "\n")
-        editor.terminal.see(tk.END)
         editor.command_history.append(command)
         editor.command_idx = len(editor.command_history)
         
@@ -26,14 +25,17 @@ def evaluate(event, editor):
                 print(e)
 
             sys.stdout = stdout
-            val = result.getvalue()
+            val = result.getvalue().strip("\n")
 
             if val:
-                editor.terminal.insert(tk.END, "> " + val)
+                for v in val.split("\n"):
+                    editor.terminal.insert(tk.END, "> " + v + "\n")
             
         else:
             if command == "clear":
                 editor.terminal.delete("1.0", tk.END)
+
+        editor.terminal.see(tk.END)
 
     elif event.keysym in ["Up", "Down"]:
         if len(editor.command_history) == 0:

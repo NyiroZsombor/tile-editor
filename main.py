@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from tile_editor import TileEditor
+from editor import Editor
 # from collision_mask_editor import CollisionMaskEditor
 
 class App(tk.Tk):
@@ -22,8 +22,8 @@ class App(tk.Tk):
         self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
         self.minsize(1280, 720)
 
-        self.frame = TileEditor(self)
-        self.frame.grid(column=0, row=0, sticky="nesw")
+        self.editor = Editor(self)
+        self.editor.grid(column=0, row=0, sticky="nesw")
 
         self.menubar = self.menubar_setup()
 
@@ -50,8 +50,8 @@ class App(tk.Tk):
 
     def main_loop(self):
         self.update()
-        self.frame.canvas.draw()
-        self.after(1000 // 20, self.main_loop)
+        self.editor.canvas.draw()
+        self.after(1000 // 60, self.main_loop)
 
 
 if __name__ == "__main__":

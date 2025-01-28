@@ -26,10 +26,18 @@ class Canvas(tk.Canvas):
 
 
     def mouse_click(self, event):
-        if not event.state & 1: return
-        self.grabbed = True
-        self.grab_start_x = event.x
-        self.grab_start_y = event.y
+        if event.state & 1:
+            self.grabbed = True
+            self.grab_start_x = event.x
+            self.grab_start_y = event.y
+        else:
+            tile_x = (event.x - self.x) // self.tile_size
+            tile_y = (event.y - self.y) // self.tile_size
+            item_id = self.master.master.tile_group_tree.focus()
+            tile = self.master.master.tile_group_tree.item(item_id)["text"]
+            print(tile)
+
+            self.tile_map.set_tile(tile_x, tile_y, tile)
 
 
     def mouse_move(self, event):
@@ -39,9 +47,6 @@ class Canvas(tk.Canvas):
 
             self.grab_start_x = event.x
             self.grab_start_y = event.y
-
-            self.master.master.update()
-            self.draw()
 
 
     def mouse_leave(self, event):
@@ -73,17 +78,17 @@ class Canvas(tk.Canvas):
     def draw_tiles(self):
         width_tiles = self.winfo_width() // self.tile_size
         height_tiles = self.winfo_height() // self.tile_size
-        x_tiles = self.x // self.tile_size
-        y_tiles = self.y // self.tile_size
+        tile_x = self.x // self.tile_size
+        tile_y = self.y // self.tile_size
 
-        start_x = max(x_tiles, -1)
-        start_y = max(y_tiles, -1)
-        end_x = max(min(width_tiles + 1, self.tile_map.width + x_tiles), 0)
-        end_y = max(min(height_tiles + 1, self.tile_map.height + y_tiles), 0)
+        start_x = max(tile_x, -1)
+        start_y = max(tile_y, -1)
+        end_x = max(min(width_tiles + 1, self.tile_map.width + tile_x), 0)
+        end_y = max(min(height_tiles + 1, self.tile_map.height + tile_y), 0)
         
         for j in range(start_y, end_y):
             for i in range(start_x, end_x):
-                tile = self.tile_map.get_tile(i, j)
+                tile = self.tile_map.get_tile(i - tile_x, j - tile_y)
                 rem_x = self.x % self.tile_size
                 rem_y = self.y % self.tile_size
 
@@ -94,7 +99,14 @@ class Canvas(tk.Canvas):
                 else: outline = ""
 
                 if not tile is None:
-                    self.create_image(outline=outline)
+                    self.create_rectangle(
+                        canvas_x,
+                        canvas_y,
+                        canvas_x + self.tile_size,
+                        canvas_y + self.tile_size,
+                        fill="purple",
+                        outline=outline
+                    )
                 else:
                     self.create_rectangle(
                         canvas_x,
