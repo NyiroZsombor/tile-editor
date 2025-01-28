@@ -9,21 +9,21 @@ class Editor(tk.Frame):
     out_path = "out"
     assets_path = "assets"
     tiles_path = os.path.join(src_path, "tiles")
+    tile_size = 64
 
     def __init__(self, master):
         super().__init__(master)
 
         style = ttk.Style()
-        if self.master.tk.call("tk", "windowingsystem") == "x11":
-            style.configure("Treeview", rowheight=40)
+        # if self.master.tk.call("tk", "windowingsystem") == "x11":
+        style.configure("Treeview", rowheight=24)
     
         self.columnconfigure(0, weight=2)
         self.columnconfigure(1, weight=7)
         self.columnconfigure(2, weight=2)
         
-        #self.rowconfigure(0, weight=2)
-        self.rowconfigure(1, weight=7)
-        self.rowconfigure(2, weight=4)
+        self.rowconfigure(0, weight=7)
+        self.rowconfigure(1, weight=4)
 
         self.grid(sticky="nsew")
 
@@ -47,7 +47,7 @@ class Editor(tk.Frame):
 
     def editor_selection_frame_setup(self):
         editor_selection_frame = tk.Frame(self, bg="white")
-        editor_selection_frame.grid(column=2, row=2, sticky="nsew")
+        editor_selection_frame.grid(column=2, row=1, sticky="nsew")
 
         label = tk.Label(
             editor_selection_frame, text="Editors", pady=2,
@@ -81,17 +81,19 @@ class Editor(tk.Frame):
             btn.configure(image=self.images[img])
             self.canvas.draw()
         
-        top_frame = tk.Frame(self, bg="yellow")
-        top_frame.grid(column=1, row=1, sticky="nsew")
+        main_editor = tk.Frame(self, bg="yellow")
+        main_editor.grid(column=1, row=0, sticky="nsew")
 
-        self.canvas = Canvas(top_frame, width=100, height=100, bg="lightblue")
+        self.canvas = Canvas(
+            main_editor, self.tile_size, width=100, height=100, bg="lightblue"
+        )
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
         btn = tk.Button(self.canvas, image=self.images["grid_enabled"])
         btn.pack(side=tk.BOTTOM, anchor=tk.W, padx=4, pady=4)
         btn.bind("<Button-1>", clicked)
 
-        return top_frame
+        return main_editor
 
 
     def file_manager_frame_setup(self):
@@ -108,7 +110,7 @@ class Editor(tk.Frame):
                     
 
         file_manager_frame = tk.Frame(self, bg="red")
-        file_manager_frame.grid(column=0, row=1, rowspan=2, sticky="nsew")
+        file_manager_frame.grid(column=0, row=0, rowspan=2, sticky="nsew")
 
         tree = ttk.Treeview(file_manager_frame)
         tree.heading("#0", text="File Manager")
@@ -128,7 +130,7 @@ class Editor(tk.Frame):
 
     def terminal_frame_setup(self):
         terminal_frame = tk.Frame(self, bg="darkgrey")
-        terminal_frame.grid(column=1, row=2, sticky="nsew")
+        terminal_frame.grid(column=1, row=1, sticky="nsew")
 
         label = tk.Label(
             terminal_frame, text="Terminal", pady=2,
@@ -164,20 +166,43 @@ class Editor(tk.Frame):
 
     def tile_group_frame_setup(self):
         tile_group_frame = tk.Frame(self, bg="blue")
-        tile_group_frame.grid(column=2, row=1, sticky="nsew")
+        tile_group_frame.grid(column=2, row=0, sticky="nsew")
         # tile_group_frame.maxsize(600, -1)
+        tile_group_frame.columnconfigure(0, weight=1)
+        tile_group_frame.rowconfigure(0, weight=1)
+        tile_group_frame.rowconfigure(1, weight=2)
 
         self.tile_groups = {}
-        self.update_tile_groups()
+        self.create_tile_groups()
 
-        self.tile_group_tree = ttk.Treeview(tile_group_frame)
-        self.tile_group_tree.heading("#0", text="Tile Groups")
-        self.update_tile_group_tree()
+        # self.tile_group_tree = ttk.Treeview(tile_group_frame)
+        # self.tile_group_tree.heading("#0", text="Tile Groups")
+        # self.create_tile_group_tree()
+    
+        top_frame = tk.Frame(tile_group_frame)
+        top_frame.grid(column=0, row=0, sticky="nsew")
 
-        self.tile_group_tree.pack(fill=tk.BOTH, expand=True)
+        self.tile_group_list = tk.Listbox(
+            top_frame, selectmode=tk.BROWSE, justify=tk.CENTER
+        )
+        for group in self.tile_groups.keys():
+            self.tile_group_list.insert(tk.END, group)
+
+        self.tile_group_list.pack(
+            fill=tk.BOTH, expand=True
+        )
+
+        self.bottom_frame = tk.Frame(tile_group_frame)
+
+        self.tile_group_grids = {}
+        #self.create_tile_group_grid(bottom_frame)
+        self.bottom_frame.grid(column=0, row=1, sticky="nsew")
+        #self.tile_group_grids["Paths"].pack()
+
+        # self.tile_group_tree.pack(fill=tk.BOTH, expand=True)
 
 
-    def update_tile_groups(self):
+    def create_tile_groups(self):
         groups = os.listdir(self.tiles_path)
 
         for group in groups:
@@ -191,7 +216,7 @@ class Editor(tk.Frame):
             self.tile_groups[group] = tile_group
 
 
-    def update_tile_group_tree(self):
+    def create_tile_group_tree(self):
         for group, items in self.tile_groups.items():
             current_group = self.tile_group_tree.insert("", 0, text=group)
 
@@ -199,3 +224,29 @@ class Editor(tk.Frame):
                 self.tile_group_tree.insert(
                     current_group, 0, text=item, image=self.images["img"]
                 )
+
+    
+    def create_tile_group_grid(self):
+        width = self.bottom_frame.winfo_width()
+        tile_width = width // self.tile_size
+
+        for i in range(tile_width):
+            self.bottom_frame.columnconfigure(i, minsize=self.tile_size)
+
+        for group in self.tile_groups:
+            frame = tk.Frame(self.bottom_frame)
+            i = 0
+
+            for tile in self.tile_groups[group]:
+                label = tk.Label(
+                    frame, image=self.images["img"], text=tile,
+                    bg="red" if (i + i // tile_width) % 2 == 0 else "blue"
+                )
+                label.grid(column=i % tile_width, row=i // tile_width, sticky="nsew")
+                i += 1
+
+            self.tile_group_grids[group] = frame
+
+
+    def get_selected_tile(self):
+        return "whatever"

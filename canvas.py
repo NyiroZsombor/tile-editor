@@ -3,10 +3,10 @@ from tile_map import TileMap
 
 class Canvas(tk.Canvas):
 
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, tile_size, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
-        self.tile_size = 64
+        self.tile_size = tile_size
         self.display_grid = True
 
         self.zoom = 1
@@ -33,10 +33,9 @@ class Canvas(tk.Canvas):
         else:
             tile_x = (event.x - self.x) // self.tile_size
             tile_y = (event.y - self.y) // self.tile_size
-            item_id = self.master.master.tile_group_tree.focus()
-            tile = self.master.master.tile_group_tree.item(item_id)["text"]
-            print(tile)
-
+            #item_id = self.master.master.get_selected_tile()
+            #tile = self.master.master.tile_group_tree.item(item_id)["text"]
+            tile = self.master.master.get_selected_tile()
             self.tile_map.set_tile(tile_x, tile_y, tile)
 
 
