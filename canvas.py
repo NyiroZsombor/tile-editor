@@ -1,5 +1,7 @@
 import tkinter as tk
 from tile_map import TileMap
+from tile_map import Tile
+import copy
 
 class Canvas(tk.Canvas):
 
@@ -20,7 +22,7 @@ class Canvas(tk.Canvas):
 
         self.bind("<Button-1>", self.mouse_click)
         self.bind("<ButtonRelease-1>", self.mouse_leave)
-        self.bind("<Motion>", self.mouse_move)
+        self.bind("<B1-Motion>", self.mouse_b1_motion)
         #self.bind("<Leave>", self.mouse_leave)
 
         self.update()
@@ -32,21 +34,30 @@ class Canvas(tk.Canvas):
             self.grab_start_x = event.x
             self.grab_start_y = event.y
         else:
-            tile_x = (event.x - self.x) // self.tile_size
-            tile_y = (event.y - self.y) // self.tile_size
-            #item_id = self.master.master.get_selected_tile()
-            #tile = self.master.master.tile_group_tree.item(item_id)["text"]
-            tile = self.master.master.get_selected_tile()
-            self.tile_map.set_tile(tile_x, tile_y, tile)
+            self.place_tile(event)
 
 
-    def mouse_move(self, event):
+    def mouse_b1_motion(self, event):
         if self.grabbed:
             self.x += event.x - self.grab_start_x
             self.y += event.y - self.grab_start_y
 
             self.grab_start_x = event.x
             self.grab_start_y = event.y
+        else:
+            self.place_tile(event)
+
+
+    def place_tile(self, event):
+        if self.master.master.selected_tile is None: return
+
+        tile_x = (event.x - self.x) // self.tile_size
+        tile_y = (event.y - self.y) // self.tile_size
+
+        if not self.tile_map.is_tile_in_bounds(tile_x, tile_y): return
+
+        tile = Tile(**self.master.master.selected_tile)
+        self.tile_map.set_tile(tile_x, tile_y, tile)
 
 
     def mouse_leave(self, event):
@@ -63,7 +74,7 @@ class Canvas(tk.Canvas):
         self.y = int(self.y)
         self.tile_size = int(self.tile_size)
 
-        print(self.x, self.y, self.tile_size, self.zoom)
+        # print(self.x, self.y, self.tile_size, self.zoom)
 
 
     def draw(self):
@@ -99,14 +110,21 @@ class Canvas(tk.Canvas):
                 else: outline = ""
 
                 if not tile is None:
-                    self.create_rectangle(
-                        canvas_x,
-                        canvas_y,
-                        canvas_x + self.tile_size,
-                        canvas_y + self.tile_size,
-                        fill="purple",
-                        outline=outline
-                    )
+                    selected_tile = self.master.master.selected_tile
+                    if selected_tile is None:
+                        self.create_rectangle(
+                            canvas_x,
+                            canvas_y,
+                            canvas_x + self.tile_size,
+                            canvas_y + self.tile_size,
+                            fill="purple",
+                            outline=outline
+                        )
+                    else:
+                        self.create_image(
+                            canvas_x, canvas_y, anchor=tk.NW,
+                            image=self.master.master.group_images[tile.group][tile.name]
+                        )
                 else:
                     self.create_rectangle(
                         canvas_x,

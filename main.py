@@ -8,7 +8,7 @@ class App(tk.Tk):
     TILE_EDITOR = 0
     COLLISION_MASKS_EDITOR = 1
 
-    def __init__(self, width_tile=16, height_tile=16, tile_size=32):
+    def __init__(self, width_tile=16, height_tile=16, tile_size=48):
         super().__init__()
         
         self.modes = ["tile editor", "collision mask editor"]
@@ -40,7 +40,8 @@ class App(tk.Tk):
         self.menubar = self.menubar_setup()
         self.update()
         self.editor.create_tile_group_grid()
-        self.editor.tile_group_grids["Paths"].pack()
+        # print(self.editor.tile_group_grids)
+        self.editor.tile_group_grids["Default"].pack()
 
         self.main_loop()
 
@@ -52,13 +53,16 @@ class App(tk.Tk):
         self["menu"] = menubar
 
         file_menu = tk.Menu(menubar)
-        edit_menu = tk.Menu(menubar)
         menubar.add_cascade(menu=file_menu, label="File")
-        menubar.add_cascade(menu=edit_menu, label="Edit")
 
         file_menu.add_command(label="New", command=self.new_file)
         file_menu.add_command(label="Save")
         file_menu.add_command(label="Save as...")
+
+        edit_menu = tk.Menu(menubar)
+        menubar.add_cascade(menu=edit_menu, label="Edit")
+
+        edit_menu.add_command(label="Clear All")        
 
         return menubar
     

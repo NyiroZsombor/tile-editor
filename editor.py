@@ -16,6 +16,7 @@ class Editor(tk.Frame):
         self.width_tile = width_tile
         self.height_tile = height_tile
         self.tile_size = tile_size
+        self.selected_tile = None
 
         style = ttk.Style()
         # if self.master.tk.call("tk", "windowingsystem") == "x11":
@@ -73,7 +74,7 @@ class Editor(tk.Frame):
 
 
     def main_editor_frame_setup(self):
-        def clicked(event):
+        def grid_btn_clicked():
             self.canvas.display_grid = not self.canvas.display_grid
 
             if self.canvas.display_grid:
@@ -81,8 +82,14 @@ class Editor(tk.Frame):
             else:
                 img = "grid_disabled"
 
-            btn.configure(image=self.images[img])
+            grid_btn.configure(image=self.images[img])
             self.canvas.draw()
+
+        def zoom_in_btn_clicked():
+            self.canvas.changeZoom(2)
+
+        def zoom_out_btn_clicked():
+            self.canvas.changeZoom(0.5)
         
         main_editor = tk.Frame(self, bg="yellow")
         main_editor.grid(column=1, row=0, sticky="nsew")
@@ -93,9 +100,23 @@ class Editor(tk.Frame):
         )
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        btn = tk.Button(self.canvas, image=self.images["grid_enabled"])
-        btn.pack(side=tk.BOTTOM, anchor=tk.W, padx=4, pady=4)
-        btn.bind("<Button-1>", clicked)
+        grid_btn = tk.Button(
+            self.canvas, image=self.images["grid_enabled"],
+            command=grid_btn_clicked
+        )
+        grid_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+
+        zoom_in_btn = tk.Button(
+            self.canvas, image=self.images["zoom_in"],
+            command=zoom_in_btn_clicked
+        )
+        zoom_in_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+
+        zoom_out_btn = tk.Button(
+            self.canvas, image=self.images["zoom_out"],
+            command=zoom_out_btn_clicked
+        )
+        zoom_out_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
 
         return main_editor
 
@@ -199,23 +220,32 @@ class Editor(tk.Frame):
         self.bottom_frame = tk.Frame(tile_group_frame)
 
         self.tile_group_grids = {}
-        #self.create_tile_group_grid(bottom_frame)
         self.bottom_frame.grid(column=0, row=1, sticky="nsew")
-        #self.tile_group_grids["Paths"].pack()
+        # self.tile_group_grids["Default"].pack()
 
         # self.tile_group_tree.pack(fill=tk.BOTH, expand=True)
 
 
     def create_tile_groups(self):
         groups = os.listdir(self.tiles_path)
+        self.group_images = {}
 
         for group in groups:
             items = os.listdir(os.path.join(self.tiles_path, group))
             tile_group = []
+            self.group_images[group] = {}
 
             for item in items:
                 if not os.path.isdir(os.path.join(self.tiles_path, item)):
-                    tile_group.append(item)
+                    name = os.path.splitext(item)[0]
+                    tile_group.append(name)
+
+                    try:
+                        path = os.path.join(self.tiles_path, group, item)
+                        self.group_images[group][name] = tk.PhotoImage(file=path)
+                    except Exception as e:
+                        pass
+                        # print(e)
 
             self.tile_groups[group] = tile_group
 
@@ -231,6 +261,9 @@ class Editor(tk.Frame):
 
     
     def create_tile_group_grid(self):
+        def clicked(event):
+            self.selected_tile = event.widget.tile
+        
         width = self.bottom_frame.winfo_width()
         tile_width = width // self.tile_size
 
@@ -242,12 +275,19 @@ class Editor(tk.Frame):
             i = 0
 
             for tile in self.tile_groups[group]:
+                img = self.images["img"]
+                if tile in self.group_images[group]:
+                    img = self.group_images[group][tile]
+
                 label = tk.Label(
-                    frame, image=self.images["img"], text=tile,
+                    frame, image=img, text=tile,
                     bg="red" if (i + i // tile_width) % 2 == 0 else "blue"
                 )
+                label.tile = {"name": tile, "group": group}
                 label.grid(column=i % tile_width, row=i // tile_width, sticky="nsew")
                 i += 1
+
+                label.bind("<Button-1>", clicked)
 
             self.tile_group_grids[group] = frame
 

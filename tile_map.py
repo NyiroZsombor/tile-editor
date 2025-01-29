@@ -25,3 +25,15 @@ class TileMap:
 
     def set_tile(self, x, y, tile):
         self.tiles[self.get_idx(x, y)] = tile
+
+
+    def is_tile_in_bounds(self, x, y):
+        return (0 <= x < self.width and
+        0 <= y < self.height)
+    
+
+class Tile:
+
+    def __init__(self, group, name):
+        self.group = group
+        self.name = name
