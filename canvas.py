@@ -3,7 +3,8 @@ from tile_map import TileMap
 
 class Canvas(tk.Canvas):
 
-    def __init__(self, master, tile_size, *args, **kwargs):
+    def __init__(self, master, width_tile, height_tile,
+    tile_size, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
         self.tile_size = tile_size
@@ -15,7 +16,7 @@ class Canvas(tk.Canvas):
         self.grabbed = False
         self.grab_start_x = 0
         self.grab_start_y = 0
-        self.tile_map = TileMap(10, 10)
+        self.tile_map = TileMap(width_tile, height_tile)
 
         self.bind("<Button-1>", self.mouse_click)
         self.bind("<ButtonRelease-1>", self.mouse_leave)

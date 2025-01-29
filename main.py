@@ -8,8 +8,7 @@ class App(tk.Tk):
     TILE_EDITOR = 0
     COLLISION_MASKS_EDITOR = 1
 
-    # TODO: , width, height, tile_size vvv
-    def __init__(self):
+    def __init__(self, width_tile=16, height_tile=16, tile_size=32):
         super().__init__()
         
         self.modes = ["tile editor", "collision mask editor"]
@@ -35,7 +34,7 @@ class App(tk.Tk):
         )
         self.minsize(1280, 720)
 
-        self.editor = Editor(self)
+        self.editor = Editor(self, width_tile, height_tile, tile_size)
         self.editor.grid(column=0, row=0, sticky="nesw")
 
         self.menubar = self.menubar_setup()
@@ -86,7 +85,12 @@ class App(tk.Tk):
             entry.delete(0, tk.END)
             entry.insert(0, val)
 
+
         def create_setting(name, step=10):
+            def get_value():
+                confirm_entry(frame.entry)
+                return int(frame.entry.get())
+
             frame = tk.Frame(win)
 
             frame.columnconfigure(0, weight=1)
@@ -116,10 +120,19 @@ class App(tk.Tk):
             frame.entry.grid(column=2, row=0, sticky="nsew")
             frame.plus_button.grid(column=3, row=0, sticky="nsew")
 
+            frame.get_value = get_value
             frame.pack(pady=8)
 
             return frame
-        
+
+        def new_editor():
+            self.after_cancel(self.after_id)
+            w = width_frame.get_value()
+            h = height_frame.get_value()
+            t = tile_size_frame.get_value()
+            self.destroy()
+            App(w, h, t).mainloop()
+
         win = tk.Toplevel()
         sw = 500
         sh = 350
@@ -132,16 +145,12 @@ class App(tk.Tk):
         win.resizable(False, False)
         win.title("New File")
 
-        create_setting("Width (tiles): ")
-        create_setting("Height (tiles): ")
-        create_setting("Tile Size (px): ", 8)
-
-        def f():
-            self.destroy()
-            App().mainloop()
+        width_frame = create_setting("Width (tiles): ")
+        height_frame = create_setting("Height (tiles): ")
+        tile_size_frame = create_setting("Tile Size (px): ", 8)
 
         create_button = tk.Button(
-            win, text="Create", command=lambda: f
+            win, text="Create", command=new_editor
         )
         cancel_button = tk.Button(
             win, text="Cancel", command=win.destroy
@@ -160,7 +169,7 @@ class App(tk.Tk):
     def main_loop(self):
         self.update()
         self.editor.canvas.draw()
-        self.after(1000 // 60, self.main_loop)
+        self.after_id = self.after(1000 // 60, self.main_loop)
 
 
 if __name__ == "__main__":

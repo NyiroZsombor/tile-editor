@@ -9,10 +9,13 @@ class Editor(tk.Frame):
     out_path = "out"
     assets_path = "assets"
     tiles_path = os.path.join(src_path, "tiles")
-    tile_size = 64
 
-    def __init__(self, master):
+    def __init__(self, master, width_tile, height_tile, tile_size):
         super().__init__(master)
+
+        self.width_tile = width_tile
+        self.height_tile = height_tile
+        self.tile_size = tile_size
 
         style = ttk.Style()
         # if self.master.tk.call("tk", "windowingsystem") == "x11":
@@ -85,7 +88,8 @@ class Editor(tk.Frame):
         main_editor.grid(column=1, row=0, sticky="nsew")
 
         self.canvas = Canvas(
-            main_editor, self.tile_size, width=100, height=100, bg="lightblue"
+            main_editor, self.width_tile, self.height_tile,
+            self.tile_size, width=100, height=100, bg="lightblue"
         )
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
