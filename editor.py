@@ -27,7 +27,7 @@ class Editor(tk.Frame):
         self.columnconfigure(2, weight=2)
         
         self.rowconfigure(0, weight=7)
-        self.rowconfigure(1, weight=4)
+        self.rowconfigure(1, weight=2)
 
         self.grid(sticky="nsew")
 
@@ -190,12 +190,18 @@ class Editor(tk.Frame):
 
 
     def tile_group_frame_setup(self):
+        def on_select(event):
+            self.tile_group_grids[self.selected_group].pack_forget()
+            idx = tile_group_list.curselection()[0]
+            self.selected_group = tile_group_list.get(idx)
+            self.tile_group_grids[self.selected_group].pack()
+
         tile_group_frame = tk.Frame(self, bg="blue")
         tile_group_frame.grid(column=2, row=0, sticky="nsew")
         # tile_group_frame.maxsize(600, -1)
-        tile_group_frame.columnconfigure(0, weight=1)
-        tile_group_frame.rowconfigure(0, weight=1)
-        tile_group_frame.rowconfigure(1, weight=2)
+        tile_group_frame.grid_columnconfigure(0, weight=1)
+        tile_group_frame.grid_rowconfigure(0, weight=1)
+        tile_group_frame.grid_rowconfigure(1, weight=2)
 
         self.tile_groups = {}
         self.create_tile_groups()
@@ -207,15 +213,26 @@ class Editor(tk.Frame):
         top_frame = tk.Frame(tile_group_frame)
         top_frame.grid(column=0, row=0, sticky="nsew")
 
-        self.tile_group_list = tk.Listbox(
+        label = tk.Label(
+            top_frame, text="Tile Groups", pady=2,
+            anchor=tk.W, font=("Helvetica", 11, "bold")
+        )
+        label.pack(side=tk.TOP, fill=tk.X)
+
+        tile_group_list = tk.Listbox(
             top_frame, selectmode=tk.BROWSE, justify=tk.CENTER
         )
         for group in self.tile_groups.keys():
-            self.tile_group_list.insert(tk.END, group)
+            tile_group_list.insert(tk.END, group)
+        tile_group_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.tile_group_list.pack(
-            fill=tk.BOTH, expand=True
+        scroll = tk.Scrollbar(
+            tile_group_list, command=tile_group_list.yview,
+            cursor="arrow", width=20
         )
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        tile_group_list.configure(yscrollcommand=scroll.set)
+        tile_group_list.bind("<<ListboxSelect>>", on_select)
 
         self.bottom_frame = tk.Frame(tile_group_frame)
 
@@ -228,6 +245,7 @@ class Editor(tk.Frame):
 
     def create_tile_groups(self):
         groups = os.listdir(self.tiles_path)
+        groups.sort()
         self.group_images = {}
 
         for group in groups:
@@ -249,15 +267,15 @@ class Editor(tk.Frame):
 
             self.tile_groups[group] = tile_group
 
+    
+    # def create_tile_group_tree(self):
+    #     for group, items in self.tile_groups.items():
+    #         current_group = self.tile_group_tree.insert("", 0, text=group)
 
-    def create_tile_group_tree(self):
-        for group, items in self.tile_groups.items():
-            current_group = self.tile_group_tree.insert("", 0, text=group)
-
-            for item in items:
-                self.tile_group_tree.insert(
-                    current_group, 0, text=item, image=self.images["img"]
-                )
+    #         for item in items:
+    #             self.tile_group_tree.insert(
+    #                 current_group, 0, text=item, image=self.images["img"]
+    #             )
 
     
     def create_tile_group_grid(self):
@@ -265,10 +283,18 @@ class Editor(tk.Frame):
             self.selected_tile = event.widget.tile
         
         width = self.bottom_frame.winfo_width()
+        height = self.bottom_frame.winfo_height()
         tile_width = width // self.tile_size
+        tile_height = height // self.tile_size
 
         for i in range(tile_width):
-            self.bottom_frame.columnconfigure(i, minsize=self.tile_size)
+            self.bottom_frame.grid_columnconfigure(
+                i, minsize=self.tile_size, weight=1
+            )
+        for i in range(tile_height):
+            self.bottom_frame.grid_rowconfigure(
+                i, minsize=self.tile_size, weight=1
+            )
 
         for group in self.tile_groups:
             frame = tk.Frame(self.bottom_frame)
@@ -284,13 +310,12 @@ class Editor(tk.Frame):
                     bg="red" if (i + i // tile_width) % 2 == 0 else "blue"
                 )
                 label.tile = {"name": tile, "group": group}
-                label.grid(column=i % tile_width, row=i // tile_width, sticky="nsew")
+                label.grid(
+                    column=i % tile_width, row=i // tile_width, sticky="nsew",
+                    padx=2, pady=2
+                )
                 i += 1
 
                 label.bind("<Button-1>", clicked)
 
             self.tile_group_grids[group] = frame
-
-
-    def get_selected_tile(self):
-        return "whatever"

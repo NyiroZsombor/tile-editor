@@ -1,7 +1,6 @@
 import tkinter as tk
 from tile_map import TileMap
 from tile_map import Tile
-import copy
 
 class Canvas(tk.Canvas):
 

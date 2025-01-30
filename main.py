@@ -1,7 +1,7 @@
 import tkinter as tk
-from tkinter import ttk
-
+import tkinter.messagebox as msg
 from editor import Editor
+from tile_map import TileMap
 # from collision_mask_editor import CollisionMaskEditor
 
 class App(tk.Tk):
@@ -41,12 +41,21 @@ class App(tk.Tk):
         self.update()
         self.editor.create_tile_group_grid()
         # print(self.editor.tile_group_grids)
+        self.editor.selected_group = "Default"
         self.editor.tile_group_grids["Default"].pack()
 
         self.main_loop()
 
 
     def menubar_setup(self):
+        def clear_all():
+            if msg.askquestion("Clear All Tiles", "Are you sure?") != "yes":
+                return
+            tm = self.editor.canvas.tile_map
+            w = tm.width
+            h = tm.height
+            self.editor.canvas.tile_map = TileMap(w, h)
+        
         self.option_add("*tearOff", tk.FALSE)
 
         menubar = tk.Menu(self)
@@ -62,7 +71,7 @@ class App(tk.Tk):
         edit_menu = tk.Menu(menubar)
         menubar.add_cascade(menu=edit_menu, label="Edit")
 
-        edit_menu.add_command(label="Clear All")        
+        edit_menu.add_command(label="Clear All", command=clear_all)        
 
         return menubar
     
