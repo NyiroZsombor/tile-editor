@@ -1,10 +1,10 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-import ttkthemes as ttkt
 import tkinter.messagebox as msg
 import tkinter.filedialog as fd
 from editor import Editor
 from tile_map import TileMap
+from preferences import Preferences
 # from collision_mask_editor import CollisionMaskEditor
 
 class App(tk.Tk):
@@ -32,21 +32,13 @@ class App(tk.Tk):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
-        # self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
-        # sw = 1280
-        # sh = 720
-        # self.geometry(
-        #     f"{sw}x{sh}" +
-        #     f"+{self.screen_width // 2 - sw // 2}" +
-        #     f"+{self.screen_height // 2 - sh // 2}"
-        # )
-
         self.attributes("-zoomed", True)
         self.minsize(1280, 720)
 
         self.editor = Editor(self, width_tile, height_tile, tile_size)
         self.editor.grid(column=0, row=0, sticky="nesw")
 
+        self.is_saved = False
         self.file_name = ""
         self.menubar = self.menubar_setup()
         self.update()
@@ -55,6 +47,7 @@ class App(tk.Tk):
         self.editor.selected_group = "Default"
         self.editor.tile_group_grids["Default"].pack()
 
+        self.editor.show_warnings()
         self.main_loop()
 
 
@@ -78,11 +71,13 @@ class App(tk.Tk):
         file_menu.add_command(label="New", command=self.new_file)
         file_menu.add_command(label="Save", command=self.save_file)
         file_menu.add_command(label="Save as...", command=self.save_file_as)
+        file_menu.add_command(label="Open...")
 
         edit_menu = tk.Menu(menubar)
         menubar.add_cascade(menu=edit_menu, label="Edit")
 
         edit_menu.add_command(label="Clear All", command=clear_all)        
+        edit_menu.add_command(label="Preferences", command=Preferences)   
 
         return menubar
     
@@ -191,12 +186,14 @@ class App(tk.Tk):
     
 
     def save_file(self):
+        self.is_saved = True
         if self.file_name == "": return self.save_file_as()
 
         self.editor.canvas.tile_map.save_json(self.file_name)
 
 
     def save_file_as(self):
+        self.is_saved = True
         file_name = fd.asksaveasfilename(defaultextension=".json")
         if file_name == "": return
         self.file_name = file_name

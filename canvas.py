@@ -12,6 +12,7 @@ class Canvas(tk.Canvas):
         self.tile_size = tile_size
         self.scaled_tile_size = tile_size
         self.display_grid = True
+        self.bg_color = "#ADE"
 
         self.zoom = 1
         self.x = 0
@@ -113,7 +114,7 @@ class Canvas(tk.Canvas):
         x1 = min(self.tile_map.width * self.scaled_tile_size + self.x, self.winfo_width())
         y1 = min(self.tile_map.height * self.scaled_tile_size + self.y, self.winfo_height())
         #print(x0, y0, x1, y1)
-        self.create_rectangle(x0, y0, x1, y1, fill="lightblue")
+        self.create_rectangle(x0, y0, x1, y1, fill=self.bg_color)
 
 
     def draw_tiles(self):

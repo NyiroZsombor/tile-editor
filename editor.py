@@ -2,6 +2,7 @@ import tkinter as tk
 import os
 from PIL import Image, ImageTk
 from tkinter import ttk
+from tkinter import messagebox as msg
 from canvas import Canvas
 from evaluate import evaluate
 
@@ -236,6 +237,8 @@ class Editor(tk.Frame):
         groups = os.listdir(self.tiles_path)
         groups.sort()
         self.group_images = {}
+        self.exception_occured = False
+        self.png_warning = False
 
         for group in groups:
             items = os.listdir(os.path.join(self.tiles_path, group))
@@ -249,14 +252,18 @@ class Editor(tk.Frame):
 
                     try:
                         path = os.path.join(self.tiles_path, group, item)
+                        if os.path.splitext(item)[-1] == ".png":
+                            self.png_warning = True
+
                         image = Image.open(path)
 
                         self.group_images[group][name] = {
-                            "icon": tk.PhotoImage(file=path),
-                            "scaled": tk.PhotoImage(file=path),
+                            "icon": ImageTk.PhotoImage(image),
+                            "scaled": ImageTk.PhotoImage(image),
                             "image": image
                         }
                     except Exception as e:
+                        self.exception_occured = True
                         print(e)
 
             self.tile_groups[group] = tile_group
@@ -303,3 +310,17 @@ class Editor(tk.Frame):
                 label.bind("<Button-1>", clicked)
 
             self.tile_group_grids[group] = frame
+
+
+    def show_warnings(self):
+        if self.exception_occured:
+            msg.showwarning(
+                "Exception while loading resources!",
+                "An exception has occured while loading images."
+            )
+        if self.png_warning:
+            msg.showwarning(
+                "PNG images detected!",
+                "The editor is not meant to be used with PNG images." +
+                " You may experience lag."
+            )

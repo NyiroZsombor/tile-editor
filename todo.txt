@@ -1,7 +1,7 @@
 file open
 history
 (shorcuts)
+preferences
 
 --fixes
 jumping tile groups
-tile scaling
