@@ -1,0 +1,7 @@
+file open
+history
+(shorcuts)
+
+--fixes
+jumping tile groups
+tile scaling

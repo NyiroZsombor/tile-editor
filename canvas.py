@@ -1,6 +1,6 @@
 import tkinter as tk
+from PIL import Image, ImageTk
 from tile_map import TileMap
-from tile_map import Tile
 
 class Canvas(tk.Canvas):
 
@@ -8,7 +8,9 @@ class Canvas(tk.Canvas):
     tile_size, *args, **kwargs):
         super().__init__(master, *args, **kwargs)
 
+        self.editor = self.master.master
         self.tile_size = tile_size
+        self.scaled_tile_size = tile_size
         self.display_grid = True
 
         self.zoom = 1
@@ -17,11 +19,13 @@ class Canvas(tk.Canvas):
         self.grabbed = False
         self.grab_start_x = 0
         self.grab_start_y = 0
-        self.tile_map = TileMap(width_tile, height_tile)
+        self.tile_map = TileMap(width_tile, height_tile, tile_size)
 
         self.bind("<Button-1>", self.mouse_click)
+        self.bind("<Button-3>", self.mouse_click_b3)
         self.bind("<ButtonRelease-1>", self.mouse_leave)
         self.bind("<B1-Motion>", self.mouse_b1_motion)
+        self.bind("<B3-Motion>", self.mouse_b3_motion)
         #self.bind("<Leave>", self.mouse_leave)
 
         self.update()
@@ -36,6 +40,10 @@ class Canvas(tk.Canvas):
             self.place_tile(event)
 
 
+    def mouse_click_b3(self, event):
+        self.place_tile(event, True)
+
+
     def mouse_b1_motion(self, event):
         if self.grabbed:
             self.x += event.x - self.grab_start_x
@@ -47,49 +55,72 @@ class Canvas(tk.Canvas):
             self.place_tile(event)
 
 
-    def place_tile(self, event):
-        if self.master.master.selected_tile is None: return
+    def mouse_b3_motion(self, event):
+        if not self.grabbed:
+            self.place_tile(event, True)
 
-        tile_x = (event.x - self.x) // self.tile_size
-        tile_y = (event.y - self.y) // self.tile_size
+
+    def place_tile(self, event, erease=False):
+        if self.editor.selected_tile is None and not erease: return
+
+        tile_x = (event.x - self.x) // self.scaled_tile_size
+        tile_y = (event.y - self.y) // self.scaled_tile_size
 
         if not self.tile_map.is_tile_in_bounds(tile_x, tile_y): return
 
-        tile = Tile(**self.master.master.selected_tile)
-        self.tile_map.set_tile(tile_x, tile_y, tile)
+        if not erease:
+            tile = self.editor.selected_tile
+            self.tile_map.set_tile(tile_x, tile_y, tile)
+        else:
+            self.tile_map.set_tile(tile_x, tile_y, None)
 
 
     def mouse_leave(self, event):
         self.grabbed = False
 
 
-    def changeZoom(self, z):
-        self.x *= z
-        self.y *= z
-        self.tile_size *= z
+    def change_zoom(self, z):
         self.zoom *= z
+        self.scaled_tile_size = int(self.tile_size * self.zoom)
 
-        self.x = int(self.x)
-        self.y = int(self.y)
-        self.tile_size = int(self.tile_size)
+        tile_groups = self.editor.group_images
+        print("new size:", self.scaled_tile_size * self.zoom)
 
-        # print(self.x, self.y, self.tile_size, self.zoom)
+        for group in tile_groups.keys():
+            for tile in tile_groups[group]:
+                img: Image.Image = tile_groups[group][tile]["image"]
+                scaled = img.resize((
+                    self.scaled_tile_size,
+                    self.scaled_tile_size
+                ))
+                self.editor.group_images[group][tile]["scaled"] = ImageTk.PhotoImage(scaled)
 
 
     def draw(self):
         self.delete(tk.ALL)
         self.create_rectangle(
-            0, 0, self.winfo_width(), self.winfo_height(), fill="lightblue"
+            0, 0, self.winfo_width(), self.winfo_height(), fill="gray"
         )
+        self.draw_background()
         self.draw_tiles()
-        #self.draw_grid()
+        if self.display_grid:
+            self.draw_grid()
+
+
+    def draw_background(self):
+        x0 = max(self.x, 0)
+        y0 = max(self.y, 0)
+        x1 = min(self.tile_map.width * self.scaled_tile_size + self.x, self.winfo_width())
+        y1 = min(self.tile_map.height * self.scaled_tile_size + self.y, self.winfo_height())
+        #print(x0, y0, x1, y1)
+        self.create_rectangle(x0, y0, x1, y1, fill="lightblue")
 
 
     def draw_tiles(self):
-        width_tiles = self.winfo_width() // self.tile_size
-        height_tiles = self.winfo_height() // self.tile_size
-        tile_x = self.x // self.tile_size
-        tile_y = self.y // self.tile_size
+        width_tiles = self.winfo_width() // self.scaled_tile_size
+        height_tiles = self.winfo_height() // self.scaled_tile_size
+        tile_x = self.x // self.scaled_tile_size
+        tile_y = self.y // self.scaled_tile_size
 
         start_x = max(tile_x, -1)
         start_y = max(tile_y, -1)
@@ -99,56 +130,43 @@ class Canvas(tk.Canvas):
         for j in range(start_y, end_y):
             for i in range(start_x, end_x):
                 tile = self.tile_map.get_tile(i - tile_x, j - tile_y)
-                rem_x = self.x % self.tile_size
-                rem_y = self.y % self.tile_size
+                rem_x = self.x % self.scaled_tile_size
+                rem_y = self.y % self.scaled_tile_size
 
-                canvas_x = i * self.tile_size + rem_x
-                canvas_y = j * self.tile_size + rem_y
+                canvas_x = i * self.scaled_tile_size + rem_x
+                canvas_y = j * self.scaled_tile_size + rem_y
 
-                if self.display_grid: outline = "black"
-                else: outline = ""
+                # if self.display_grid: outline = "black"
+                # else: outline = ""
 
                 if not tile is None:
-                    selected_tile = self.master.master.selected_tile
-                    if selected_tile is None:
-                        self.create_rectangle(
-                            canvas_x,
-                            canvas_y,
-                            canvas_x + self.tile_size,
-                            canvas_y + self.tile_size,
-                            fill="purple",
-                            outline=outline
-                        )
-                    else:
-                        self.create_image(
-                            canvas_x, canvas_y, anchor=tk.NW,
-                            image=self.master.master.group_images[tile.group][tile.name]
-                        )
-                else:
-                    self.create_rectangle(
-                        canvas_x,
-                        canvas_y,
-                        canvas_x + self.tile_size,
-                        canvas_y + self.tile_size,
-                        fill="lightblue",
-                        outline=outline
+                    group = tile["group"]
+                    name = tile["name"]
+                    img = self.editor.group_images[group][name]["scaled"]
+                    self.create_image(
+                        canvas_x, canvas_y, anchor=tk.NW, image=img
                     )
+                # else:
+                #     self.create_rectangle(
+                #         canvas_x, canvas_y,
+                #         canvas_x + self.tile_size,
+                #         canvas_y + self.tile_size,
+                #         fill="lightblue",
+                #         outline=outline
+                #     )
 
 
     def draw_grid(self):
-        if not self.display_grid:
-            return
-        
-        for i in range(self.winfo_width() // self.tile_size + 1):
+        for i in range(self.winfo_width() // self.scaled_tile_size + 1):
             self.create_line(
-                i * self.tile_size + self.x, 0,
-                i * self.tile_size + self.x, self.winfo_height(),
+                i * self.scaled_tile_size + (self.x % self.scaled_tile_size), 0,
+                i * self.scaled_tile_size + (self.x % self.scaled_tile_size), self.winfo_height(),
                 fill="grey", width=1
             )
 
-        for i in range(self.winfo_height() // self.tile_size + 1):
+        for i in range(self.winfo_height() // self.scaled_tile_size + 1):
             self.create_line(
-                0, i * self.tile_size + self.y,
-                self.winfo_width(), i * self.tile_size + self.y,
+                0, i * self.scaled_tile_size + (self.y % self.scaled_tile_size),
+                self.winfo_width(), i * self.scaled_tile_size + (self.y % self.scaled_tile_size),
                 fill="grey", width=1
             )

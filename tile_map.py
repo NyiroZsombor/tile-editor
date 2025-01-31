@@ -1,8 +1,11 @@
+import json
+
 class TileMap:
 
-    def __init__(self, width, height):
+    def __init__(self, width, height, tile_size):
         self.width = width
         self.height = height
+        self.tile_size = tile_size
         self.tiles = [None] * self.width * self.height
 
 
@@ -32,8 +35,22 @@ class TileMap:
         0 <= y < self.height)
     
 
-class Tile:
+    def save_json(self, path):
+        tile_map = {
+            "width": self.width,
+            "height": self.height,
+            "tile_size": self.tile_size,
+            "tiles": self.tiles
+        }
 
-    def __init__(self, group, name):
-        self.group = group
-        self.name = name
+        # for i in range(self.height):
+        #     row = self.tiles[i * self.width:(i + 1) * self.width]
+        #     tile_map["grid"].append(row)
+
+        with open(path, "w+") as file:
+            json.dump(tile_map, file)
+    
+
+    # TODO
+    def save_binary(self, path):
+        pass

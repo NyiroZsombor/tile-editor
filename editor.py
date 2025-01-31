@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import ttk
 import os
+from PIL import Image, ImageTk
+from tkinter import ttk
 from canvas import Canvas
 from evaluate import evaluate
 
@@ -18,10 +19,6 @@ class Editor(tk.Frame):
         self.tile_size = tile_size
         self.selected_tile = None
 
-        style = ttk.Style()
-        # if self.master.tk.call("tk", "windowingsystem") == "x11":
-        style.configure("Treeview", rowheight=24)
-    
         self.columnconfigure(0, weight=2)
         self.columnconfigure(1, weight=7)
         self.columnconfigure(2, weight=2)
@@ -86,10 +83,10 @@ class Editor(tk.Frame):
             self.canvas.draw()
 
         def zoom_in_btn_clicked():
-            self.canvas.changeZoom(2)
+            self.canvas.change_zoom(2)
 
         def zoom_out_btn_clicked():
-            self.canvas.changeZoom(0.5)
+            self.canvas.change_zoom(0.5)
         
         main_editor = tk.Frame(self, bg="yellow")
         main_editor.grid(column=1, row=0, sticky="nsew")
@@ -198,18 +195,13 @@ class Editor(tk.Frame):
 
         tile_group_frame = tk.Frame(self, bg="blue")
         tile_group_frame.grid(column=2, row=0, sticky="nsew")
-        # tile_group_frame.maxsize(600, -1)
         tile_group_frame.grid_columnconfigure(0, weight=1)
         tile_group_frame.grid_rowconfigure(0, weight=1)
         tile_group_frame.grid_rowconfigure(1, weight=2)
 
         self.tile_groups = {}
-        self.create_tile_groups()
+        self.create_tile_group_images()
 
-        # self.tile_group_tree = ttk.Treeview(tile_group_frame)
-        # self.tile_group_tree.heading("#0", text="Tile Groups")
-        # self.create_tile_group_tree()
-    
         top_frame = tk.Frame(tile_group_frame)
         top_frame.grid(column=0, row=0, sticky="nsew")
 
@@ -238,12 +230,9 @@ class Editor(tk.Frame):
 
         self.tile_group_grids = {}
         self.bottom_frame.grid(column=0, row=1, sticky="nsew")
-        # self.tile_group_grids["Default"].pack()
-
-        # self.tile_group_tree.pack(fill=tk.BOTH, expand=True)
 
 
-    def create_tile_groups(self):
+    def create_tile_group_images(self):
         groups = os.listdir(self.tiles_path)
         groups.sort()
         self.group_images = {}
@@ -260,22 +249,17 @@ class Editor(tk.Frame):
 
                     try:
                         path = os.path.join(self.tiles_path, group, item)
-                        self.group_images[group][name] = tk.PhotoImage(file=path)
+                        image = Image.open(path)
+
+                        self.group_images[group][name] = {
+                            "icon": tk.PhotoImage(file=path),
+                            "scaled": tk.PhotoImage(file=path),
+                            "image": image
+                        }
                     except Exception as e:
-                        pass
-                        # print(e)
+                        print(e)
 
             self.tile_groups[group] = tile_group
-
-    
-    # def create_tile_group_tree(self):
-    #     for group, items in self.tile_groups.items():
-    #         current_group = self.tile_group_tree.insert("", 0, text=group)
-
-    #         for item in items:
-    #             self.tile_group_tree.insert(
-    #                 current_group, 0, text=item, image=self.images["img"]
-    #             )
 
     
     def create_tile_group_grid(self):
@@ -303,7 +287,7 @@ class Editor(tk.Frame):
             for tile in self.tile_groups[group]:
                 img = self.images["img"]
                 if tile in self.group_images[group]:
-                    img = self.group_images[group][tile]
+                    img = self.group_images[group][tile]["icon"]
 
                 label = tk.Label(
                     frame, image=img, text=tile,

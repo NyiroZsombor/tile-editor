@@ -1,5 +1,8 @@
 import tkinter as tk
+import tkinter.ttk as ttk
+import ttkthemes as ttkt
 import tkinter.messagebox as msg
+import tkinter.filedialog as fd
 from editor import Editor
 from tile_map import TileMap
 # from collision_mask_editor import CollisionMaskEditor
@@ -15,6 +18,11 @@ class App(tk.Tk):
         self.current_mode = self.TILE_EDITOR
 
         self.call("tk", "scaling", 2.0)
+
+        style = ttk.Style(self)
+        # if self.master.tk.call("tk", "windowingsystem") == "x11":
+        style.theme_use("plastik")
+        style.configure("Treeview", rowheight=24)
         
         self.title("Tile Editor")
 
@@ -25,18 +33,21 @@ class App(tk.Tk):
         self.columnconfigure(0, weight=1)
 
         # self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}")
-        sw = 1280
-        sh = 720
-        self.geometry(
-            f"{sw}x{sh}" +
-            f"+{self.screen_width // 2 - sw // 2}" +
-            f"+{self.screen_height // 2 - sh // 2}"
-        )
+        # sw = 1280
+        # sh = 720
+        # self.geometry(
+        #     f"{sw}x{sh}" +
+        #     f"+{self.screen_width // 2 - sw // 2}" +
+        #     f"+{self.screen_height // 2 - sh // 2}"
+        # )
+
+        self.attributes("-zoomed", True)
         self.minsize(1280, 720)
 
         self.editor = Editor(self, width_tile, height_tile, tile_size)
         self.editor.grid(column=0, row=0, sticky="nesw")
 
+        self.file_name = ""
         self.menubar = self.menubar_setup()
         self.update()
         self.editor.create_tile_group_grid()
@@ -54,7 +65,7 @@ class App(tk.Tk):
             tm = self.editor.canvas.tile_map
             w = tm.width
             h = tm.height
-            self.editor.canvas.tile_map = TileMap(w, h)
+            self.editor.canvas.tile_map = TileMap(w, h, tm.tile_size)
         
         self.option_add("*tearOff", tk.FALSE)
 
@@ -65,8 +76,8 @@ class App(tk.Tk):
         menubar.add_cascade(menu=file_menu, label="File")
 
         file_menu.add_command(label="New", command=self.new_file)
-        file_menu.add_command(label="Save")
-        file_menu.add_command(label="Save as...")
+        file_menu.add_command(label="Save", command=self.save_file)
+        file_menu.add_command(label="Save as...", command=self.save_file_as)
 
         edit_menu = tk.Menu(menubar)
         menubar.add_cascade(menu=edit_menu, label="Edit")
@@ -178,6 +189,19 @@ class App(tk.Tk):
             anchor=tk.N, expand=True, fill=tk.X
         )
     
+
+    def save_file(self):
+        if self.file_name == "": return self.save_file_as()
+
+        self.editor.canvas.tile_map.save_json(self.file_name)
+
+
+    def save_file_as(self):
+        file_name = fd.asksaveasfilename(defaultextension=".json")
+        if file_name == "": return
+        self.file_name = file_name
+        self.editor.canvas.tile_map.save_json(file_name)
+
 
     def main_loop(self):
         self.update()
