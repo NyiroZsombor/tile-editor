@@ -1,3 +1,5 @@
+import os
+import json
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.messagebox as msg
@@ -13,7 +15,16 @@ class App(tk.Tk):
 
     def __init__(self, width_tile=16, height_tile=16, tile_size=48):
         super().__init__()
-        
+
+        try:
+            with open("settings.json", "r") as file:
+                self.settings = json.load(file)
+        except FileNotFoundError:
+            self.settings = self.create_settings_json()
+
+        with open("settings.json", "w") as file:
+            json.dump(self.settings, file)
+
         self.modes = ["tile editor", "collision mask editor"]
         self.current_mode = self.TILE_EDITOR
 
@@ -48,6 +59,8 @@ class App(tk.Tk):
         self.editor.tile_group_grids["Default"].pack()
 
         self.editor.show_warnings()
+        if self.settings["startup_open"]:
+            self.open_file()
         self.main_loop()
 
 
@@ -71,7 +84,7 @@ class App(tk.Tk):
         file_menu.add_command(label="New", command=self.new_file)
         file_menu.add_command(label="Save", command=self.save_file)
         file_menu.add_command(label="Save as...", command=self.save_file_as)
-        file_menu.add_command(label="Open...")
+        file_menu.add_command(label="Open...", command=self.open_file)
 
         edit_menu = tk.Menu(menubar)
         menubar.add_cascade(menu=edit_menu, label="Edit")
@@ -104,8 +117,7 @@ class App(tk.Tk):
             entry.delete(0, tk.END)
             entry.insert(0, val)
 
-
-        def create_setting(name, step=10):
+        def create_setting(name, step):
             def get_value():
                 confirm_entry(frame.entry)
                 return int(frame.entry.get())
@@ -145,12 +157,10 @@ class App(tk.Tk):
             return frame
 
         def new_editor():
-            self.after_cancel(self.after_id)
             w = width_frame.get_value()
             h = height_frame.get_value()
             t = tile_size_frame.get_value()
-            self.destroy()
-            App(w, h, t).mainloop()
+            self.new_editor(w, h, t).mainloop()
 
         win = tk.Toplevel()
         sw = 500
@@ -164,8 +174,8 @@ class App(tk.Tk):
         win.resizable(False, False)
         win.title("New File")
 
-        width_frame = create_setting("Width (tiles): ")
-        height_frame = create_setting("Height (tiles): ")
+        width_frame = create_setting("Width (tiles): ", 8)
+        height_frame = create_setting("Height (tiles): ", 8)
         tile_size_frame = create_setting("Tile Size (px): ", 8)
 
         create_button = tk.Button(
@@ -183,11 +193,17 @@ class App(tk.Tk):
             side=tk.LEFT, padx=24, pady=48,
             anchor=tk.N, expand=True, fill=tk.X
         )
-    
+
+
+    def new_editor(self, width, height, tile_size):
+        self.after_cancel(self.after_id)
+        self.destroy()
+        return App(width, height, tile_size)
+
 
     def save_file(self):
         self.is_saved = True
-        if self.file_name == "": return self.save_file_as()
+        if not self.file_name: return self.save_file_as()
 
         self.editor.canvas.tile_map.save_json(self.file_name)
 
@@ -195,9 +211,44 @@ class App(tk.Tk):
     def save_file_as(self):
         self.is_saved = True
         file_name = fd.asksaveasfilename(defaultextension=".json")
-        if file_name == "": return
+        if not file_name: return
         self.file_name = file_name
-        self.editor.canvas.tile_map.save_json(file_name)
+        self.editor.canvas.tile_map.save_json(self.file_name)
+
+
+    def open_file(self):
+        filename = fd.askopenfilename(
+            title="Open File", 
+            filetypes=(("JSON file", "*.json"), ("Binary file", "*.bin"))
+        )
+
+        if filename:
+            ext = os.path.splitext(filename)[-1]
+
+            if ext == ".json":
+                with open(filename, "r") as file:
+                    tile_map = json.load(file)
+                
+                new_app = self.new_editor(
+                    tile_map["width"], 
+                    tile_map["height"],
+                    tile_map["tile_size"]
+                )
+                new_app.editor.canvas.tile_map.load_json(tile_map["tiles"])
+
+
+    def create_settings_json(self):
+        default_settings = {
+            "startup_warnings": 1,
+            "startup_open": 0,
+            "background_color": "AADDEE",
+            "file_manager_path": os.getcwd(),
+            "tiles_path": os.path.join(os.getcwd(), "tiles")
+        }
+        with open("settings.json", "x") as file:
+            json.dump(default_settings, file)
+
+        return default_settings
 
 
     def main_loop(self):

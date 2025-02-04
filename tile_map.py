@@ -51,6 +51,9 @@ class TileMap:
             json.dump(tile_map, file)
     
 
+    def load_json(self, tiles):
+        self.tiles = tiles
+
     # TODO
     def save_binary(self, path):
         pass

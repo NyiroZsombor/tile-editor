@@ -10,7 +10,6 @@ class Editor(tk.Frame):
     src_path = "src"
     out_path = "out"
     assets_path = "assets"
-    tiles_path = os.path.join(src_path, "tiles")
 
     def __init__(self, master, width_tile, height_tile, tile_size):
         super().__init__(master)
@@ -19,6 +18,7 @@ class Editor(tk.Frame):
         self.height_tile = height_tile
         self.tile_size = tile_size
         self.selected_tile = None
+        self.tiles_path = self.master.settings["tiles_path"]
 
         self.columnconfigure(0, weight=2)
         self.columnconfigure(1, weight=7)
@@ -238,7 +238,7 @@ class Editor(tk.Frame):
         groups.sort()
         self.group_images = {}
         self.exception_occured = False
-        self.png_warning = False
+        self.transparency_warning = False
 
         for group in groups:
             items = os.listdir(os.path.join(self.tiles_path, group))
@@ -248,14 +248,19 @@ class Editor(tk.Frame):
             for item in items:
                 if not os.path.isdir(os.path.join(self.tiles_path, item)):
                     name = os.path.splitext(item)[0]
-                    tile_group.append(name)
 
                     try:
+                        tile_group.append(name)
                         path = os.path.join(self.tiles_path, group, item)
-                        if os.path.splitext(item)[-1] == ".png":
-                            self.png_warning = True
-
                         image = Image.open(path)
+                        MIN = 0
+                        ALPHA = -1
+
+                        if image.mode == "RGBA":
+                            if image.getextrema()[MIN][ALPHA] < 255:
+                                self.transparency_warning = True
+                                print(path)
+                                
 
                         self.group_images[group][name] = {
                             "icon": ImageTk.PhotoImage(image),
@@ -292,9 +297,9 @@ class Editor(tk.Frame):
             i = 0
 
             for tile in self.tile_groups[group]:
-                img = self.images["img"]
                 if tile in self.group_images[group]:
                     img = self.group_images[group][tile]["icon"]
+                else: continue
 
                 label = tk.Label(
                     frame, image=img, text=tile,
@@ -313,14 +318,16 @@ class Editor(tk.Frame):
 
 
     def show_warnings(self):
+        if not self.master.settings["startup_warnings"]: return
         if self.exception_occured:
             msg.showwarning(
                 "Exception while loading resources!",
-                "An exception has occured while loading images."
+                "Warning! An exception has occured while loading images."
             )
-        if self.png_warning:
+        
+        if self.transparency_warning:
             msg.showwarning(
-                "PNG images detected!",
-                "The editor is not meant to be used with PNG images." +
-                " You may experience lag."
+                "Images with transparency detected!",
+                "Warning! The editor is not meant to be used with images" +
+                "with transparency. You may experience lag."
             )

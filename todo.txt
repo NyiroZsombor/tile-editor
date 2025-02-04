@@ -1,7 +1,10 @@
-file open
 history
 (shorcuts)
-preferences
+preferences (file access(file manager, tiles))
+ruler
+(tools (paint bucket))
+filter tiles based on tile size
+collision masks
 
 --fixes
 jumping tile groups

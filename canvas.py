@@ -12,7 +12,7 @@ class Canvas(tk.Canvas):
         self.tile_size = tile_size
         self.scaled_tile_size = tile_size
         self.display_grid = True
-        self.bg_color = "#ADE"
+        self.bg_color = "#" + self.editor.master.settings["background_color"]
 
         self.zoom = 1
         self.x = 0
@@ -81,11 +81,15 @@ class Canvas(tk.Canvas):
 
 
     def change_zoom(self, z):
+        if self.zoom * z > 16: return
+        if self.zoom * z < 0.0625: return
         self.zoom *= z
         self.scaled_tile_size = int(self.tile_size * self.zoom)
 
+        # self.x = int(self.x * self.zoom + self.zoom * self.winfo_width() / 2)
+        # self.y = int(self.y * self.zoom + self.zoom * self.winfo_height() / 2)
+
         tile_groups = self.editor.group_images
-        print("new size:", self.scaled_tile_size * self.zoom)
 
         for group in tile_groups.keys():
             for tile in tile_groups[group]:

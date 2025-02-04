@@ -30,7 +30,6 @@ def evaluate(event, editor):
             if val:
                 for v in val.split("\n"):
                     editor.terminal.insert(tk.END, "> " + v + "\n")
-            
         else:
             if command == "clear":
                 editor.terminal.delete("1.0", tk.END)
