@@ -31,7 +31,8 @@ class App(tk.Tk):
         self.call("tk", "scaling", 2.0)
 
         style = ThemedStyle(self)
-        # if self.master.tk.call("tk", "windowingsystem") == "x11":
+        self.op_sys = self.tk.call("tk", "windowingsystem")
+
         if "plastik" in style.theme_names(): style.set_theme("plastik")
         style.configure("Treeview", rowheight=24)
         
@@ -43,7 +44,10 @@ class App(tk.Tk):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
 
-        self.attributes("-zoomed", True)
+        if self.op_sys == "x11":
+            self.attributes("-zoomed", True)
+        else:
+            self.state("zoomed")
         self.minsize(1280, 720)
 
         self.editor = Editor(self, width_tile, height_tile, tile_size)

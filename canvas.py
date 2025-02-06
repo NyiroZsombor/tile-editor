@@ -97,8 +97,8 @@ class Canvas(tk.Canvas):
                 img: Image.Image = tile_groups[group][tile]["image"]
                 scaled = img.resize((
                     self.scaled_tile_size,
-                    self.scaled_tile_size
-                ))
+                    self.scaled_tile_size,
+                ), Image.Resampling.NEAREST)
 
                 self.editor.group_images[group][tile]["scaled"] = ImageTk.PhotoImage(scaled)
 
