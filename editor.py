@@ -190,7 +190,9 @@ class Editor(tk.Frame):
     def tile_group_frame_setup(self):
         def on_select(event):
             self.tile_group_grids[self.selected_group].pack_forget()
-            idx = tile_group_list.curselection()[0]
+            curselection = tile_group_list.curselection()
+            if not curselection: return
+            idx = curselection[0]
             self.selected_group = tile_group_list.get(idx)
             self.tile_group_grids[self.selected_group].pack()
 
@@ -251,16 +253,7 @@ class Editor(tk.Frame):
 
                     try:
                         tile_group.append(name)
-                        path = os.path.join(self.tiles_path, group, item)
-                        image = Image.open(path)
-                        MIN = 0
-                        ALPHA = -1
-
-                        if image.mode == "RGBA":
-                            if image.getextrema()[MIN][ALPHA] < 255:
-                                self.transparency_warning = True
-                                print(path)
-                                
+                        image = self.check_image(self.tiles_path, group, item)
 
                         self.group_images[group][name] = {
                             "icon": ImageTk.PhotoImage(image),
@@ -272,6 +265,22 @@ class Editor(tk.Frame):
                         print(e)
 
             self.tile_groups[group] = tile_group
+
+
+    def check_image(self, path, group, tile):
+        image = Image.open(os.path.join(path, group, tile))
+        MIN = 0
+        ALPHA = -1
+
+        if image.mode == "RGBA":
+            if image.getextrema()[MIN][ALPHA] < 255:
+                self.transparency_warning = True
+
+        if (image.size[0] != self.tile_size
+        or image.size[1] != self.tile_size):
+            return None
+        
+        return image
 
     
     def create_tile_group_grid(self):

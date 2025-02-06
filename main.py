@@ -7,7 +7,6 @@ import tkinter.filedialog as fd
 from editor import Editor
 from tile_map import TileMap
 from preferences import Preferences
-# from collision_mask_editor import CollisionMaskEditor
 
 class App(tk.Tk):
     TILE_EDITOR = 0
@@ -54,8 +53,7 @@ class App(tk.Tk):
         self.menubar = self.menubar_setup()
         self.update()
         self.editor.create_tile_group_grid()
-        # print(self.editor.tile_group_grids)
-        self.editor.selected_group = "Default"
+        self.editor.selected_group = "image_setupDefault"
         self.editor.tile_group_grids["Default"].pack()
 
         self.editor.show_warnings()
@@ -210,10 +208,22 @@ class App(tk.Tk):
 
     def save_file_as(self):
         self.is_saved = True
-        file_name = fd.asksaveasfilename(defaultextension=".json")
+        filetypes = (("JSON file", "*.json"), ("PNG image", "*.png"))
+        file_name = fd.asksaveasfilename(
+            defaultextension=".json", filetypes=filetypes
+        )
         if not file_name: return
         self.file_name = file_name
-        self.editor.canvas.tile_map.save_json(self.file_name)
+        ext = os.path.splitext(self.file_name)[1]
+
+        if ext == ".json":
+            self.editor.canvas.tile_map.save_json(self.file_name)
+        elif ext == ".png":
+            self.editor.canvas.tile_map.save_image(
+                self.file_name,
+                self.editor.group_images
+            )
+        else: print("invalid filetype", ext)
 
 
     def open_file(self):

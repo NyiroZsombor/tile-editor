@@ -1,10 +1,10 @@
-history
+(history)
 (shorcuts)
-preferences (file access(file manager, tiles))
 ruler
 (tools (paint bucket))
-filter tiles based on tile size
 collision masks
+save as image
 
 --fixes
 jumping tile groups
+tile group gets deselected (when selecting terminal or editor mode)

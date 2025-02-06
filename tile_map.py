@@ -1,4 +1,5 @@
 import json
+from PIL import Image
 
 class TileMap:
 
@@ -49,6 +50,26 @@ class TileMap:
 
         with open(path, "w+") as file:
             json.dump(tile_map, file)
+
+
+    def save_image(self, path, images):
+        size = (self.width * self.tile_size, self.height * self.tile_size)
+        img = Image.new("RGB", size)
+
+        for i in range(self.width):
+            for j in range(self.height):
+                tile = self.tiles[i + j * self.width]
+                if tile is None: continue
+
+                tile_img = images[tile["group"]][tile["name"]]["image"]
+                pos = (j * self.tile_size, i * self.tile_size)
+                box = (*pos,
+                    pos[0] + tile_img.size[0],
+                    pos[1] + tile_img.size[1]
+                )
+                img.paste(tile_img, box)
+
+        img.save(path)
     
 
     def load_json(self, tiles):
