@@ -14,7 +14,7 @@ sudo apt install python3-pil python3-pil.imagetk
 
 ## Usage
 
-Run file with python. Open a terminal in Tile Editor folder
+Run the main.py file with python. Open a terminal in Tile Editor folder
 
 On Windows:
 ```bash
@@ -25,8 +25,4 @@ On Linux
 python3 main.py
 ```
 
-
-
-
-
-
+Move the cursor with Shift + Left Click. Select a tile to be placed on the right. Remove tiles with Right Click

@@ -3,7 +3,6 @@
 ruler
 (tools (paint bucket))
 collision masks
-save as image
 
 --fixes
 jumping tile groups

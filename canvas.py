@@ -12,6 +12,7 @@ class Canvas(tk.Canvas):
         self.tile_size = tile_size
         self.scaled_tile_size = tile_size
         self.display_grid = True
+        self.display_ruler = True
         self.bg_color = "#" + self.editor.master.settings["background_color"]
 
         self.zoom = 1
@@ -98,6 +99,7 @@ class Canvas(tk.Canvas):
                     self.scaled_tile_size,
                     self.scaled_tile_size
                 ))
+
                 self.editor.group_images[group][tile]["scaled"] = ImageTk.PhotoImage(scaled)
 
 
@@ -110,13 +112,21 @@ class Canvas(tk.Canvas):
         self.draw_tiles()
         if self.display_grid:
             self.draw_grid()
+        if self.display_ruler:
+            self.draw_ruler()
 
 
     def draw_background(self):
         x0 = max(self.x, 0)
         y0 = max(self.y, 0)
-        x1 = min(self.tile_map.width * self.scaled_tile_size + self.x, self.winfo_width())
-        y1 = min(self.tile_map.height * self.scaled_tile_size + self.y, self.winfo_height())
+        x1 = min(
+            self.tile_map.width * self.scaled_tile_size + self.x,
+            self.winfo_width()
+        )
+        y1 = min(
+            self.tile_map.height * self.scaled_tile_size + self.y,
+            self.winfo_height()
+        )
         #print(x0, y0, x1, y1)
         self.create_rectangle(x0, y0, x1, y1, fill=self.bg_color)
 
@@ -164,14 +174,60 @@ class Canvas(tk.Canvas):
     def draw_grid(self):
         for i in range(self.winfo_width() // self.scaled_tile_size + 1):
             self.create_line(
-                i * self.scaled_tile_size + (self.x % self.scaled_tile_size), 0,
-                i * self.scaled_tile_size + (self.x % self.scaled_tile_size), self.winfo_height(),
+                i * self.scaled_tile_size + (self.x % self.scaled_tile_size),
+                0,
+                i * self.scaled_tile_size + (self.x % self.scaled_tile_size),
+                self.winfo_height(),
                 fill="grey", width=1
             )
 
         for i in range(self.winfo_height() // self.scaled_tile_size + 1):
             self.create_line(
-                0, i * self.scaled_tile_size + (self.y % self.scaled_tile_size),
-                self.winfo_width(), i * self.scaled_tile_size + (self.y % self.scaled_tile_size),
+                0, 
+                i * self.scaled_tile_size + (self.y % self.scaled_tile_size),
+                self.winfo_width(),
+                i * self.scaled_tile_size + (self.y % self.scaled_tile_size),
                 fill="grey", width=1
             )
+
+
+    def draw_ruler(self):
+        if self.scaled_tile_size < 16: return
+        ruler_width = 18
+
+        self.create_rectangle(
+            0, 0, self.winfo_width(),
+            ruler_width, fill="white"
+        )
+        self.create_rectangle(
+            self.winfo_width() - ruler_width, 0,
+            self.winfo_width(), self.winfo_height(), fill="white"
+        )
+
+        for i in range(self.winfo_width() // self.scaled_tile_size + 1):
+            x = i * self.scaled_tile_size + (self.x % self.scaled_tile_size)
+            y = 0
+
+            self.create_line(x, y, x, y + ruler_width, fill="grey", width=1)
+
+            self.create_text(
+                x - self.scaled_tile_size / 2,
+                y + ruler_width / 2,
+                text=i - self.x // self.scaled_tile_size - 1
+            )
+
+        for i in range(self.winfo_height() // self.scaled_tile_size + 2):
+            x = self.winfo_width() - ruler_width
+            y = i * self.scaled_tile_size + (self.y % self.scaled_tile_size)
+            self.create_line(x, y, x + ruler_width, y, fill="grey", width=1)
+
+            self.create_text(
+                x + ruler_width / 2,
+                y - self.scaled_tile_size / 2,
+                text=i - self.y // self.scaled_tile_size - 1, angle=-90
+            )
+
+        self.create_rectangle(
+            self.winfo_width() - ruler_width, 0,
+            self.winfo_width(), ruler_width, fill="white"
+        )

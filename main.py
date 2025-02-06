@@ -4,6 +4,7 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.messagebox as msg
 import tkinter.filedialog as fd
+from ttkthemes import ThemedStyle
 from editor import Editor
 from tile_map import TileMap
 from preferences import Preferences
@@ -29,9 +30,9 @@ class App(tk.Tk):
 
         self.call("tk", "scaling", 2.0)
 
-        style = ttk.Style(self)
+        style = ThemedStyle(self)
         # if self.master.tk.call("tk", "windowingsystem") == "x11":
-        style.theme_use("plastik")
+        if "plastik" in style.theme_names(): style.set_theme("plastik")
         style.configure("Treeview", rowheight=24)
         
         self.title("Tile Editor")
@@ -53,7 +54,7 @@ class App(tk.Tk):
         self.menubar = self.menubar_setup()
         self.update()
         self.editor.create_tile_group_grid()
-        self.editor.selected_group = "image_setupDefault"
+        self.editor.selected_group = "Default"
         self.editor.tile_group_grids["Default"].pack()
 
         self.editor.show_warnings()

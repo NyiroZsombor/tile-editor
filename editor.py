@@ -81,7 +81,16 @@ class Editor(tk.Frame):
                 img = "grid_disabled"
 
             grid_btn.configure(image=self.images[img])
-            self.canvas.draw()
+
+        def ruler_btn_clicked():
+            self.canvas.display_ruler = not self.canvas.display_ruler
+
+            if self.canvas.display_ruler:
+                img = "ruler_enabled"
+            else:
+                img = "ruler_disabled"
+
+            ruler_btn.configure(image=self.images[img])
 
         def zoom_in_btn_clicked():
             self.canvas.change_zoom(2)
@@ -92,24 +101,35 @@ class Editor(tk.Frame):
         main_editor = tk.Frame(self, bg="yellow")
         main_editor.grid(column=1, row=0, sticky="nsew")
 
+        # canvas
         self.canvas = Canvas(
             main_editor, self.width_tile, self.height_tile,
             self.tile_size, width=100, height=100, bg="lightblue"
         )
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        # grid
         grid_btn = tk.Button(
             self.canvas, image=self.images["grid_enabled"],
             command=grid_btn_clicked
         )
         grid_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
 
+        # ruler
+        ruler_btn = tk.Button(
+            self.canvas, image=self.images["ruler_enabled"],
+            command=ruler_btn_clicked
+        )
+        ruler_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+
+        # zoom in
         zoom_in_btn = tk.Button(
             self.canvas, image=self.images["zoom_in"],
             command=zoom_in_btn_clicked
         )
         zoom_in_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
 
+        # zoom out
         zoom_out_btn = tk.Button(
             self.canvas, image=self.images["zoom_out"],
             command=zoom_out_btn_clicked

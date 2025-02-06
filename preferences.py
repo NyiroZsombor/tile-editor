@@ -111,7 +111,7 @@ class Preferences(tk.Toplevel):
 
         main_frame = self.create_preference("Show Warnings on Startup")
         create_btn("Show Warnings on Startup", "startup_warnings")
-        create_btn("Open New File on Startup", "startup_open")
+        create_btn("Pompt File Open on Startup", "startup_open")
 
 
     def file_paths_frame_setup(self):
