@@ -80,7 +80,7 @@ class Preferences(tk.Toplevel):
         for i in range(3):
             scales[i].pack(fill=tk.X, padx=32, pady=4)
 
-        btn = tk.Button(main_frame.frame, text="Save", command=on_press())
+        btn = tk.Button(main_frame.frame, text="Save", command=on_press)
         btn.pack()
 
         return main_frame
@@ -116,52 +116,46 @@ class Preferences(tk.Toplevel):
 
     def file_paths_frame_setup(self):
         def on_click(label):
-            directiory = fd.askdirectory(title="dir")
-            if not directiory: return
-            label.configure(text=label.label + directiory)
+            directory = fd.askdirectory(title=label.title)
+            if not directory: return
+            label.configure(text=label.title + ": " + directory)
+            
+            # self.editor.file_manager_path = directory
+            # new_frame = self.editor.file_manager_frame_setup()
+            # self.editor.file_manager_frame = new_frame
+
+            print(directory)
+            self.editor.tile_group_path = directory
+            new_frame = self.editor.tile_group_frame_setup()
+            self.editor.tile_group_frame = new_frame
+            self.editor.create_tile_group_grid()
+
+        def create_label(title, setting):
+            label = tk.Label(
+                main_frame.frame, bg=default_color, padx=4, pady=4, border=2
+            )
+            label.pack(pady=4)
+            label.title = title + ": "
+            label.configure(text=(
+                label.title + self.master.settings[setting]
+            ))
+
+            label.bind("<Button-1>",
+                lambda _: on_click(label)
+            )
+            label.bind("<Enter>",
+                lambda _: label.configure(bg=highlight_color)
+            )
+            label.bind("<Leave>",
+                lambda _: label.configure(bg=default_color)
+            )
 
         main_frame = self.create_preference("File Paths")
 
         default_color = "#EEE"
         highlight_color = "#FFF"
         
-        file_manager_label = tk.Label(
-            main_frame.frame, bg=default_color, padx=4, pady=4, border=2
-        )
-        file_manager_label.pack(pady=4)
-        file_manager_label.label = "File Manager: "
-        file_manager_label.configure(text=(
-            file_manager_label.label + self.master.settings["file_manager_path"]
-        ))
-
-        file_manager_label.bind(
-            "<Button-1>", lambda _: on_click(file_manager_label)
-        )
-        file_manager_label.bind(
-            "<Enter>", lambda _: file_manager_label.configure(bg=highlight_color)
-        )
-        file_manager_label.bind(
-            "<Leave>", lambda _: file_manager_label.configure(bg=default_color)
-        )
-
-        tiles_label = tk.Label(
-            main_frame.frame, text=self.master.settings["tiles_path"],
-            bg=default_color, padx=4, pady=4, border=2
-        )
-        tiles_label.pack(pady=4)
-        tiles_label.label = "Tiles: "
-        tiles_label.configure(text=(
-            tiles_label.label + self.master.settings["tiles_path"]
-        ))
-
-        tiles_label.bind(
-            "<Button-1>", lambda _: on_click(tiles_label)
-        )
-        tiles_label.bind(
-            "<Enter>", lambda _: tiles_label.configure(bg=highlight_color)
-        )
-        tiles_label.bind(
-            "<Leave>", lambda _: tiles_label.configure(bg=default_color)
-        )
+        create_label("File Manager", "file_manager_path")
+        create_label("Tiles", "tiles_path")
 
         return main_frame

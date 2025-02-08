@@ -10,6 +10,7 @@ class Editor(tk.Frame):
     src_path = "src"
     out_path = "out"
     assets_path = "assets"
+    file_manager_path = os.getcwd()
 
     def __init__(self, master, width_tile, height_tile, tile_size):
         super().__init__(master)
@@ -140,7 +141,7 @@ class Editor(tk.Frame):
 
 
     def file_manager_frame_setup(self):
-        def insert_items(iid="", path=os.getcwd()):
+        def insert_items(iid="", path=self.file_manager_path):
             for file in os.listdir(path):
                 is_dir = os.path.isdir(os.path.join(path, file))
 
@@ -209,6 +210,7 @@ class Editor(tk.Frame):
 
     def tile_group_frame_setup(self):
         def on_select(event):
+            if self.selected_group is None: return
             self.tile_group_grids[self.selected_group].pack_forget()
             curselection = tile_group_list.curselection()
             if not curselection: return
@@ -268,21 +270,23 @@ class Editor(tk.Frame):
             self.group_images[group] = {}
 
             for item in items:
-                if not os.path.isdir(os.path.join(self.tiles_path, item)):
-                    name = os.path.splitext(item)[0]
+                if os.path.isdir(os.path.join(self.tiles_path, item)):
+                    continue
 
-                    try:
-                        tile_group.append(name)
-                        image = self.check_image(self.tiles_path, group, item)
+                name = os.path.splitext(item)[0]
 
-                        self.group_images[group][name] = {
-                            "icon": ImageTk.PhotoImage(image),
-                            "scaled": ImageTk.PhotoImage(image),
-                            "image": image
-                        }
-                    except Exception as e:
-                        self.exception_occured = True
-                        print(e)
+                try:
+                    tile_group.append(name)
+                    image = self.check_image(self.tiles_path, group, item)
+
+                    self.group_images[group][name] = {
+                        "icon": ImageTk.PhotoImage(image),
+                        "scaled": ImageTk.PhotoImage(image),
+                        "image": image
+                    }
+                except Exception as e:
+                    self.exception_occured = True
+                    print(e)
 
             self.tile_groups[group] = tile_group
 
@@ -349,12 +353,14 @@ class Editor(tk.Frame):
     def show_warnings(self):
         if not self.master.settings["startup_warnings"]: return
         if self.exception_occured:
+            self.exception_occured = False
             msg.showwarning(
                 "Exception while loading resources!",
                 "Warning! An exception has occured while loading images."
             )
         
         if self.transparency_warning:
+            self.transparency_warning = False
             msg.showwarning(
                 "Images with transparency detected!",
                 "Warning! The editor is not meant to be used with images" +

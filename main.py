@@ -10,30 +10,25 @@ from tile_map import TileMap
 from preferences import Preferences
 
 class App(tk.Tk):
-    TILE_EDITOR = 0
-    COLLISION_MASKS_EDITOR = 1
 
     def __init__(self, width_tile=16, height_tile=16, tile_size=48):
         super().__init__()
 
-        try:
-            with open("settings.json", "r") as file:
-                self.settings = json.load(file)
-        except FileNotFoundError:
-            self.settings = self.create_settings_json()
-
-        with open("settings.json", "w") as file:
-            json.dump(self.settings, file)
-
-        self.modes = ["tile editor", "collision mask editor"]
-        self.current_mode = self.TILE_EDITOR
+        self.settings = self.open_json_file(
+            "settings", self.create_settings_json)
+        self.keybinds = self.open_json_file(
+            "keybinds", self.create_keybinds_json)
 
         self.call("tk", "scaling", 2.0)
 
         style = ThemedStyle(self)
         self.op_sys = self.tk.call("tk", "windowingsystem")
 
-        if "plastik" in style.theme_names(): style.set_theme("plastik")
+        if "plastik" in style.theme_names():
+            style.set_theme("plastik")
+        else:
+            print("unable to set theme")
+
         style.configure("Treeview", rowheight=24)
         
         self.title("Tile Editor")
@@ -50,6 +45,7 @@ class App(tk.Tk):
             self.state("zoomed")
         self.minsize(1280, 720)
 
+        self.preferences = None
         self.editor = Editor(self, width_tile, height_tile, tile_size)
         self.editor.grid(column=0, row=0, sticky="nesw")
 
@@ -61,20 +57,25 @@ class App(tk.Tk):
         self.editor.selected_group = "Default"
         self.editor.tile_group_grids["Default"].pack()
 
+        self.keybinds_setup()
+
         self.editor.show_warnings()
         if self.settings["startup_open"]:
             self.open_file()
         self.main_loop()
 
 
+    def open_json_file(self, filename, fallback_function):
+        try:
+            with open(filename + ".json", "r") as file:
+                json_file = json.load(file)
+        except FileNotFoundError:
+            json_file = fallback_function()
+
+        return json_file
+
+
     def menubar_setup(self):
-        def clear_all():
-            if msg.askquestion("Clear All Tiles", "Are you sure?") != "yes":
-                return
-            tm = self.editor.canvas.tile_map
-            w = tm.width
-            h = tm.height
-            self.editor.canvas.tile_map = TileMap(w, h, tm.tile_size)
         
         self.option_add("*tearOff", tk.FALSE)
 
@@ -92,12 +93,28 @@ class App(tk.Tk):
         edit_menu = tk.Menu(menubar)
         menubar.add_cascade(menu=edit_menu, label="Edit")
 
-        edit_menu.add_command(label="Clear All", command=clear_all)        
-        edit_menu.add_command(label="Preferences", command=Preferences)   
+        edit_menu.add_command(label="Clear All", command=self.clear_all)        
+        edit_menu.add_command(label="Preferences", command=self.open_preferences)   
 
         return menubar
     
 
+    def open_preferences(self):
+        if self.preferences is not None:
+            self.preferences.destroy()
+
+        self.preferences = Preferences()
+    
+
+    def clear_all(self):
+        if msg.askquestion("Clear All Tiles", "Are you sure?") != "yes":
+            return
+        tm = self.editor.canvas.tile_map
+        w = tm.width
+        h = tm.height
+        self.editor.canvas.tile_map = TileMap(w, h, tm.tile_size)
+
+    
     def new_file(self):
         def change_entry(entry, amount):
             val = entry.get()
@@ -261,9 +278,38 @@ class App(tk.Tk):
             "tiles_path": os.path.join(os.getcwd(), "tiles")
         }
         with open("settings.json", "x") as file:
-            json.dump(default_settings, file)
+            json.dump(default_settings, file, indent=4)
 
         return default_settings
+    
+
+    def create_keybinds_json(self):
+        default_keybinds = {
+            "Control-d": "clear-all",
+            "Control-p": "open-preferences",
+            "Control-n": "new-file",
+            "Control-s": "save-file",
+            "Control-o": "open-file"
+        }
+
+        with open("keybinds.json", "x") as file:
+            json.dump(default_keybinds, file, indent=4)
+
+        return default_keybinds
+
+
+    def keybinds_setup(self):
+        def get_func(function_name):
+            match function_name:
+                case "clear-all": return self.clear_all
+                case "open-preferences": return self.open_preferences
+                case "new-file": return self.new_file
+                case "save-file": return self.save_file
+                case "open-file": return self.open_file
+        
+        for bind in self.keybinds.keys():
+            func = get_func(self.keybinds[bind])
+            self.bind("<" + bind + ">", lambda _, func=func: func())
 
 
     def main_loop(self):
