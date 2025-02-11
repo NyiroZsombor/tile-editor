@@ -1,3 +1,4 @@
+import os
 import json
 from PIL import Image
 
@@ -7,11 +8,7 @@ class TileMap:
         self.width = width
         self.height = height
         self.tile_size = tile_size
-        self.tiles = [None] * self.width * self.height
-
-
-    def save(self): pass
-    def load(self): pass
+        self.tiles: list[dict[str, Image.Image]] = [None] * self.width * self.height
 
 
     def get_idx(self, x, y):
@@ -41,7 +38,7 @@ class TileMap:
             "width": self.width,
             "height": self.height,
             "tile_size": self.tile_size,
-            "tiles": self.tiles
+            "tiles": [tile["id"] if tile is not None else None for tile in self.tiles]
         }
 
         # for i in range(self.height):
@@ -52,28 +49,72 @@ class TileMap:
             json.dump(tile_map, file)
 
 
-    def save_image(self, path, images):
+    def save_image(self, path):
         size = (self.width * self.tile_size, self.height * self.tile_size)
-        img = Image.new("RGB", size)
+        img = Image.new("RGBA", size, color=255)
 
-        for i in range(self.width):
-            for j in range(self.height):
-                tile = self.tiles[i + j * self.width]
+        for y in range(self.height):
+            for x in range(self.width):
+                tile = self.tiles[x + y * self.width]
                 if tile is None: continue
 
-                tile_img = images[tile["group"]][tile["name"]]["image"]
-                pos = (j * self.tile_size, i * self.tile_size)
+                pos = (x * self.tile_size, y * self.tile_size)
                 box = (*pos,
-                    pos[0] + tile_img.size[0],
-                    pos[1] + tile_img.size[1]
+                    pos[0] + tile["image"].size[0],
+                    pos[1] + tile["image"].size[1]
                 )
-                img.paste(tile_img, box)
+                img.paste(tile["image"], box)
 
         img.save(path)
     
 
     def load_json(self, tiles):
         self.tiles = tiles
+
+
+    def save(self, path, tile_set_images: dict[str, Image.Image]):
+        self.create_path(path)
+        self.create_path(os.path.join(path, "tile_sets"))
+
+        self.save_image(self.get_file_with_ext(path, ".png"))
+        self.save_json(self.get_file_with_ext(path, ".json"))
+        
+        if not os.path.exists(path) or not os.path.isdir(path):
+            os.mkdir(path)
+
+        for group in tile_set_images.keys():
+            img_path = os.path.join(path, "tile_sets", group + ".png")
+            tile_set_images[group].save(img_path)
+
+
+    @staticmethod
+    def create_path(path):
+       if not os.path.exists(path) or not os.path.isdir(path):
+            os.mkdir(path) 
+
+
+    def load(self, path, groups: dict[str, list[Image.Image]]):
+        try:
+            json_path = self.get_file_with_ext(path, ".json")
+            with open(json_path) as file:
+                tile_map = json.load(file)
+                self.width = tile_map["width"]
+                self.height = tile_map["height"]
+
+                for idx, tile_id in enumerate(tile_map["tiles"]):
+                    if tile_id is None: continue
+                    group, tile_idx = tile_id.split("_")
+                    tile = groups[group][int(tile_idx)]
+                    self.tiles[idx] = tile
+
+        except Exception as e:
+            print(e)
+
+    @staticmethod
+    def get_file_with_ext(path, ext, file_name=None) -> str:
+        file_name = file_name or os.path.split(path)[1]
+        return os.path.join(path, file_name + ext) 
+
 
     # TODO
     def save_binary(self, path):

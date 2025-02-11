@@ -53,19 +53,14 @@ class App(tk.Tk):
         self.file_name = ""
         self.menubar = self.menubar_setup()
 
-        # self.update()
-        # self.editor.create_tile_group_grid()
-        # self.editor.selected_group = "Default"
-        # self.editor.tile_group_grids["Default"].pack()
-
         self.update()
 
-        self.editor.tile_groups.load_image("tiles/TX Tileset Grass.png", "Grass")
-        self.editor.tile_groups.load_image("tiles/TX Plant.png", "Plant")
-        self.editor.tile_groups.create_tile_group_grid("Grass")
-        self.editor.tile_groups.create_tile_group_grid("Plant")
-        self.editor.tile_groups.create_tile_group_lists()
-        self.editor.tile_groups.select_group("Grass")
+        # self.editor.tile_groups.load_image("tiles/TX Tileset Grass.png", "Grass")
+        # self.editor.tile_groups.load_image("tiles/TX Plant.png", "Plant")
+        # self.editor.tile_groups.create_tile_group_grid("Grass")
+        # self.editor.tile_groups.create_tile_group_grid("Plant")
+        # self.editor.tile_groups.create_tile_group_lists()
+        # self.editor.tile_groups.select_group("Grass")
 
         self.keybinds_setup()
 
@@ -235,35 +230,48 @@ class App(tk.Tk):
         self.is_saved = True
         if not self.file_name: return self.save_file_as()
 
-        self.editor.canvas.tile_map.save_json(self.file_name)
+        self.save_file_ext(self.file_name)
 
 
     def save_file_as(self):
         self.is_saved = True
         filetypes = (("JSON file", "*.json"), ("PNG image", "*.png"))
-        file_name = fd.asksaveasfilename(
-            defaultextension=".json", filetypes=filetypes
-        )
+        file_name = fd.askdirectory()
         if not file_name: return
         self.file_name = file_name
-        ext = os.path.splitext(self.file_name)[1]
+        self.save_file_ext(self.file_name)
 
+
+    def save_file_ext(self, file_name):
+        ext = os.path.splitext(file_name)[1]
+        self.editor.canvas.tile_map.save(
+            file_name, self.editor.tile_groups.tile_set_images
+        )
+
+        return
         if ext == ".json":
-            self.editor.canvas.tile_map.save_json(self.file_name)
+            self.editor.canvas.tile_map.save_json(file_name)
         elif ext == ".png":
-            self.editor.canvas.tile_map.save_image(
-                self.file_name,
-                self.editor.group_images
-            )
+            self.editor.canvas.tile_map.save_image(file_name)
         else: print("invalid filetype", ext)
 
 
     def open_file(self):
-        filename = fd.askopenfilename(
-            title="Open File", 
-            filetypes=(("JSON file", "*.json"), ("Binary file", "*.bin"))
+        filename = fd.askdirectory()
+        new_app = self.new_editor(
+            self.editor.width_tile,
+            self.editor.height_tile, 
+            self.editor.tile_size
         )
+        new_app.file_name = filename
+        new_app.editor.tile_groups.load_images(os.path.join(filename, "tile_sets"))
+        groups = new_app.editor.tile_groups.groups
+        new_app.editor.canvas.tile_map.load(filename, groups)
+        new_app.editor.tile_groups.create_tile_group_grids()
+        new_app.editor.tile_groups.create_tile_group_lists()
+        new_app.mainloop()
 
+        return
         if filename:
             ext = os.path.splitext(filename)[-1]
 

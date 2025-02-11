@@ -14,6 +14,7 @@ class TileGroups(tk.Frame):
         self.bottom_frame_sizes: dict[str, tuple] = {}
         self.group_grids: dict[str, tk.Frame] = {}
         self.groups: dict[str, list] = {}
+        self.tile_set_images: dict[str, Image.Image] = {}
         self.exception_occured = False
         self.transparency_warning = False
 
@@ -44,8 +45,17 @@ class TileGroups(tk.Frame):
         return top_frame
 
 
+    def load_images(self, path):
+        img_paths = os.listdir(path)
+
+        for img_path in img_paths:
+            name = os.path.splitext(os.path.split(img_path)[1])[0]
+            self.load_image(os.path.join(path, img_path), name)
+
+
     def load_image(self, path, name):
         img = Image.open(path)
+        self.tile_set_images[name] = img
         tiles = []
 
         for i in range(img.size[1] // self.tile_size):
@@ -64,7 +74,8 @@ class TileGroups(tk.Frame):
                     tiles.append({
                         "icon": ImageTk.PhotoImage(icon),
                         "scaled": ImageTk.PhotoImage(tile_img),
-                        "image": tile_img
+                        "image": tile_img,
+                        "id": name + "_" + str(len(tiles))
                     })
 
                 except Exception as e:
@@ -128,7 +139,13 @@ class TileGroups(tk.Frame):
             self.exception_occured = True
             print(e)
 
-    # TODO tile groups is too wide
+
+    def create_tile_group_grids(self, groups: list[str]=None):
+        groups = groups or self.groups.keys()
+        for group in groups:
+            self.create_tile_group_grid(group)
+
+
     def create_tile_group_grid(self, group: str):
         def clicked(event):
             self.selected_tile = event.widget.tile

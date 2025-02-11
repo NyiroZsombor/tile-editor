@@ -7,6 +7,10 @@ class Preferences(tk.Toplevel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        try:
+            self.wm_attributes("-topmost", True)
+        except Exception as e:
+            print(e)
         self.editor = self.master.editor
         self.title("Preferences")
         self.geometry("640x720")
@@ -155,7 +159,7 @@ class Preferences(tk.Toplevel):
         default_color = "#EEE"
         highlight_color = "#FFF"
         
-        create_label("File Manager", "file_manager_path")
+        # create_label("File Manager", "file_manager_path")
         create_label("Tiles", "tiles_path")
 
         return main_frame
