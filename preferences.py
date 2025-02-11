@@ -124,7 +124,7 @@ class Preferences(tk.Toplevel):
             # new_frame = self.editor.file_manager_frame_setup()
             # self.editor.file_manager_frame = new_frame
 
-            print(directory)
+            # print(directory)
             self.editor.tile_group_path = directory
             new_frame = self.editor.tile_group_frame_setup()
             self.editor.tile_group_frame = new_frame

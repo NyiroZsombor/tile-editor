@@ -52,10 +52,20 @@ class App(tk.Tk):
         self.is_saved = False
         self.file_name = ""
         self.menubar = self.menubar_setup()
+
+        # self.update()
+        # self.editor.create_tile_group_grid()
+        # self.editor.selected_group = "Default"
+        # self.editor.tile_group_grids["Default"].pack()
+
         self.update()
-        self.editor.create_tile_group_grid()
-        self.editor.selected_group = "Default"
-        self.editor.tile_group_grids["Default"].pack()
+
+        self.editor.tile_groups.load_image("tiles/TX Tileset Grass.png", "Grass")
+        self.editor.tile_groups.load_image("tiles/TX Plant.png", "Plant")
+        self.editor.tile_groups.create_tile_group_grid("Grass")
+        self.editor.tile_groups.create_tile_group_grid("Plant")
+        self.editor.tile_groups.create_tile_group_lists()
+        self.editor.tile_groups.select_group("Grass")
 
         self.keybinds_setup()
 

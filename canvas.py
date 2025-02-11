@@ -62,16 +62,18 @@ class Canvas(tk.Canvas):
             self.place_tile(event, True)
 
 
-    def place_tile(self, event, erease=False):
-        if self.editor.selected_tile is None and not erease: return
+    def place_tile(self, event, erase=False):
+        if self.editor.tile_groups.selected_tile is None and not erase:
+            return
 
         tile_x = (event.x - self.x) // self.scaled_tile_size
         tile_y = (event.y - self.y) // self.scaled_tile_size
 
-        if not self.tile_map.is_tile_in_bounds(tile_x, tile_y): return
+        if not self.tile_map.is_tile_in_bounds(tile_x, tile_y):
+            return
 
-        if not erease:
-            tile = self.editor.selected_tile
+        if not erase:
+            tile = self.editor.tile_groups.selected_tile
             self.tile_map.set_tile(tile_x, tile_y, tile)
         else:
             self.tile_map.set_tile(tile_x, tile_y, None)
@@ -90,17 +92,17 @@ class Canvas(tk.Canvas):
         # self.x = int(self.x * self.zoom + self.zoom * self.winfo_width() / 2)
         # self.y = int(self.y * self.zoom + self.zoom * self.winfo_height() / 2)
 
-        tile_groups = self.editor.group_images
+        groups = self.editor.tile_groups.groups
 
-        for group in tile_groups.keys():
-            for tile in tile_groups[group]:
-                img: Image.Image = tile_groups[group][tile]["image"]
+        for group in groups.keys():
+            for i in range(len(groups[group])):
+                img: Image.Image = groups[group][i]["image"]
                 scaled = img.resize((
                     self.scaled_tile_size,
                     self.scaled_tile_size,
                 ), Image.Resampling.NEAREST)
 
-                self.editor.group_images[group][tile]["scaled"] = ImageTk.PhotoImage(scaled)
+                self.editor.tile_groups.groups[group][i]["scaled"] = ImageTk.PhotoImage(scaled)
 
 
     def draw(self):
@@ -155,9 +157,7 @@ class Canvas(tk.Canvas):
                 # else: outline = ""
 
                 if not tile is None:
-                    group = tile["group"]
-                    name = tile["name"]
-                    img = self.editor.group_images[group][name]["scaled"]
+                    img = tile["scaled"]
                     self.create_image(
                         canvas_x, canvas_y, anchor=tk.NW, image=img
                     )
@@ -192,7 +192,7 @@ class Canvas(tk.Canvas):
 
 
     def draw_ruler(self):
-        if self.scaled_tile_size < 16: return
+        if self.scaled_tile_size < 24: return
         ruler_width = 18
 
         self.create_rectangle(

@@ -3,6 +3,7 @@ import os
 from PIL import Image, ImageTk
 from tkinter import ttk
 from tkinter import messagebox as msg
+from tile_groups import TileGroups
 from canvas import Canvas
 from evaluate import evaluate
 
@@ -30,22 +31,22 @@ class Editor(tk.Frame):
 
         self.grid(sticky="nsew")
 
-        self.image_setup()
+        self.icons_setup()
 
         self.editor_selection_frame = self.editor_selection_frame_setup()
         self.main_editor_frame = self.main_editor_frame_setup()
         self.file_manager_frame = self.file_manager_frame_setup()
         self.terminal_frame = self.terminal_frame_setup()
-        self.tile_group_frame = self.tile_group_frame_setup()
+        self.tile_groups = TileGroups(self, self.tile_size, bg="blue")
 
 
-    def image_setup(self):
-        self.images = {}
-        for img_ext in os.listdir(self.assets_path):
-            img_path = os.path.join(os.getcwd(), self.assets_path, img_ext)
-            img_name = os.path.splitext(img_ext)[0]
+    def icons_setup(self):
+        self.icons = {}
+        for icon_ext in os.listdir(self.assets_path):
+            icon_path = os.path.join(os.getcwd(), self.assets_path, icon_ext)
+            icon_name = os.path.splitext(icon_ext)[0]
 
-            self.images[img_name] = tk.PhotoImage(file=img_path)
+            self.icons[icon_name] = tk.PhotoImage(file=icon_path)
 
 
     def editor_selection_frame_setup(self):
@@ -81,7 +82,7 @@ class Editor(tk.Frame):
             else:
                 img = "grid_disabled"
 
-            grid_btn.configure(image=self.images[img])
+            grid_btn.configure(image=self.icons[img])
 
         def ruler_btn_clicked():
             self.canvas.display_ruler = not self.canvas.display_ruler
@@ -91,7 +92,7 @@ class Editor(tk.Frame):
             else:
                 img = "ruler_disabled"
 
-            ruler_btn.configure(image=self.images[img])
+            ruler_btn.configure(image=self.icons[img])
 
         def zoom_in_btn_clicked():
             self.canvas.change_zoom(2)
@@ -111,28 +112,28 @@ class Editor(tk.Frame):
 
         # grid
         grid_btn = tk.Button(
-            self.canvas, image=self.images["grid_enabled"],
+            self.canvas, image=self.icons["grid_enabled"],
             command=grid_btn_clicked
         )
         grid_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
 
         # ruler
         ruler_btn = tk.Button(
-            self.canvas, image=self.images["ruler_enabled"],
+            self.canvas, image=self.icons["ruler_enabled"],
             command=ruler_btn_clicked
         )
         ruler_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
 
         # zoom in
         zoom_in_btn = tk.Button(
-            self.canvas, image=self.images["zoom_in"],
+            self.canvas, image=self.icons["zoom_in"],
             command=zoom_in_btn_clicked
         )
         zoom_in_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
 
         # zoom out
         zoom_out_btn = tk.Button(
-            self.canvas, image=self.images["zoom_out"],
+            self.canvas, image=self.icons["zoom_out"],
             command=zoom_out_btn_clicked
         )
         zoom_out_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
@@ -208,159 +209,18 @@ class Editor(tk.Frame):
         return terminal_frame
 
 
-    def tile_group_frame_setup(self):
-        def on_select(event):
-            if self.selected_group is None: return
-            self.tile_group_grids[self.selected_group].pack_forget()
-            curselection = tile_group_list.curselection()
-            if not curselection: return
-            idx = curselection[0]
-            self.selected_group = tile_group_list.get(idx)
-            self.tile_group_grids[self.selected_group].pack()
-
-        tile_group_frame = tk.Frame(self, bg="blue")
-        tile_group_frame.grid(column=2, row=0, sticky="nsew")
-        tile_group_frame.grid_columnconfigure(0, weight=1)
-        tile_group_frame.grid_rowconfigure(0, weight=1)
-        tile_group_frame.grid_rowconfigure(1, weight=2)
-
-        self.tile_groups = {}
-        self.create_tile_group_images()
-
-        top_frame = tk.Frame(tile_group_frame)
-        top_frame.grid(column=0, row=0, sticky="nsew")
-
-        label = tk.Label(
-            top_frame, text="Tile Groups", pady=2,
-            anchor=tk.W, font=("Helvetica", 11, "bold")
-        )
-        label.pack(side=tk.TOP, fill=tk.X)
-
-        tile_group_list = tk.Listbox(
-            top_frame, selectmode=tk.BROWSE, justify=tk.CENTER
-        )
-        for group in self.tile_groups.keys():
-            tile_group_list.insert(tk.END, group)
-        tile_group_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        scroll = tk.Scrollbar(
-            tile_group_list, command=tile_group_list.yview,
-            cursor="arrow", width=20
-        )
-        scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        tile_group_list.configure(yscrollcommand=scroll.set)
-        tile_group_list.bind("<<ListboxSelect>>", on_select)
-
-        self.bottom_frame = tk.Frame(tile_group_frame)
-
-        self.tile_group_grids = {}
-        self.bottom_frame.grid(column=0, row=1, sticky="nsew")
-
-
-    def create_tile_group_images(self):
-        groups = os.listdir(self.tiles_path)
-        groups.sort()
-        self.group_images = {}
-        self.exception_occured = False
-        self.transparency_warning = False
-
-        for group in groups:
-            items = os.listdir(os.path.join(self.tiles_path, group))
-            tile_group = []
-            self.group_images[group] = {}
-
-            for item in items:
-                if os.path.isdir(os.path.join(self.tiles_path, item)):
-                    continue
-
-                name = os.path.splitext(item)[0]
-
-                try:
-                    tile_group.append(name)
-                    image = self.check_image(self.tiles_path, group, item)
-
-                    self.group_images[group][name] = {
-                        "icon": ImageTk.PhotoImage(image),
-                        "scaled": ImageTk.PhotoImage(image),
-                        "image": image
-                    }
-                except Exception as e:
-                    self.exception_occured = True
-                    print(e)
-
-            self.tile_groups[group] = tile_group
-
-
-    def check_image(self, path, group, tile):
-        image = Image.open(os.path.join(path, group, tile))
-        MIN = 0
-        ALPHA = -1
-
-        if image.mode == "RGBA":
-            if image.getextrema()[MIN][ALPHA] < 255:
-                self.transparency_warning = True
-
-        if (image.size[0] != self.tile_size
-        or image.size[1] != self.tile_size):
-            return None
-        
-        return image
-
-    
-    def create_tile_group_grid(self):
-        def clicked(event):
-            self.selected_tile = event.widget.tile
-        
-        width = self.bottom_frame.winfo_width()
-        height = self.bottom_frame.winfo_height()
-        tile_width = width // self.tile_size
-        tile_height = height // self.tile_size
-
-        for i in range(tile_width):
-            self.bottom_frame.grid_columnconfigure(
-                i, minsize=self.tile_size, weight=1
-            )
-        for i in range(tile_height):
-            self.bottom_frame.grid_rowconfigure(
-                i, minsize=self.tile_size, weight=1
-            )
-
-        for group in self.tile_groups:
-            frame = tk.Frame(self.bottom_frame)
-            i = 0
-
-            for tile in self.tile_groups[group]:
-                if tile in self.group_images[group]:
-                    img = self.group_images[group][tile]["icon"]
-                else: continue
-
-                label = tk.Label(
-                    frame, image=img, text=tile,
-                    bg="red" if (i + i // tile_width) % 2 == 0 else "blue"
-                )
-                label.tile = {"name": tile, "group": group}
-                label.grid(
-                    column=i % tile_width, row=i // tile_width, sticky="nsew",
-                    padx=2, pady=2
-                )
-                i += 1
-
-                label.bind("<Button-1>", clicked)
-
-            self.tile_group_grids[group] = frame
-
-
     def show_warnings(self):
         if not self.master.settings["startup_warnings"]: return
-        if self.exception_occured:
-            self.exception_occured = False
+
+        if self.tile_groups.exception_occured:
+            self.tile_groups.exception_occured = False
             msg.showwarning(
                 "Exception while loading resources!",
                 "Warning! An exception has occured while loading images."
             )
         
-        if self.transparency_warning:
-            self.transparency_warning = False
+        if self.tile_groups.transparency_warning:
+            self.tile_groups.transparency_warning = False
             msg.showwarning(
                 "Images with transparency detected!",
                 "Warning! The editor is not meant to be used with images" +
