@@ -139,7 +139,6 @@ class TileGroups(tk.Frame):
         tile_width = width // (self.tile_size + pad * 2)
         tile_height = int(height / (self.tile_size + pad * 2))
 
-        print(tile_width, tile_height)
         self.bottom_frame_sizes[group] = (tile_width, tile_height)
         frame = tk.Frame(self.bottom_frame)
         frame.grid_propagate(False)

@@ -35,8 +35,8 @@ class Editor(tk.Frame):
 
         self.editor_selection_frame = self.editor_selection_frame_setup()
         self.main_editor_frame = self.main_editor_frame_setup()
-        self.file_manager_frame = self.file_manager_frame_setup()
-        self.terminal_frame = self.terminal_frame_setup()
+        # self.file_manager_frame = self.file_manager_frame_setup()
+        # self.terminal_frame = self.terminal_frame_setup()
         self.tile_groups = TileGroups(self, self.tile_size, bg="blue")
 
 
@@ -101,7 +101,9 @@ class Editor(tk.Frame):
             self.canvas.change_zoom(0.5)
         
         main_editor = tk.Frame(self, bg="yellow")
-        main_editor.grid(column=1, row=0, sticky="nsew")
+        main_editor.grid(
+            column=0, row=0, columnspan=2, rowspan=3, sticky="nsew"
+        )
 
         # canvas
         self.canvas = Canvas(
@@ -110,33 +112,42 @@ class Editor(tk.Frame):
         )
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        icons_frame = tk.Frame(
+            self.canvas, highlightbackground="darkgray",
+            highlightthickness=4, padx=4
+        )
+
+        icons_pack = {"side": tk.LEFT, "anchor": tk.S, "padx": 4, "pady": 16}
+
         # grid
         grid_btn = tk.Button(
-            self.canvas, image=self.icons["grid_enabled"],
+            icons_frame, image=self.icons["grid_enabled"],
             command=grid_btn_clicked
         )
-        grid_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+        grid_btn.pack(**icons_pack)
 
         # ruler
         ruler_btn = tk.Button(
-            self.canvas, image=self.icons["ruler_enabled"],
+            icons_frame, image=self.icons["ruler_enabled"],
             command=ruler_btn_clicked
         )
-        ruler_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+        ruler_btn.pack(**icons_pack)
 
         # zoom in
         zoom_in_btn = tk.Button(
-            self.canvas, image=self.icons["zoom_in"],
+            icons_frame, image=self.icons["zoom_in"],
             command=zoom_in_btn_clicked
         )
-        zoom_in_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+        zoom_in_btn.pack(**icons_pack)
 
         # zoom out
         zoom_out_btn = tk.Button(
-            self.canvas, image=self.icons["zoom_out"],
+            icons_frame, image=self.icons["zoom_out"],
             command=zoom_out_btn_clicked
         )
-        zoom_out_btn.pack(side=tk.LEFT, anchor=tk.S, padx=4, pady=4)
+        zoom_out_btn.pack(**icons_pack)
+
+        icons_frame.pack(side=tk.LEFT, anchor=tk.S, padx=16, pady=16)
 
         return main_editor
 
