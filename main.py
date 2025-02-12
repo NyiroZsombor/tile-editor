@@ -70,9 +70,9 @@ class App(tk.Tk):
         self.main_loop()
 
 
-    def open_json_file(self, filename, fallback_function):
+    def open_json_file(self, file_name, fallback_function):
         try:
-            with open(filename + ".json", "r") as file:
+            with open(file_name + ".json", "r") as file:
                 json_file = json.load(file)
         except FileNotFoundError:
             json_file = fallback_function()
@@ -257,26 +257,27 @@ class App(tk.Tk):
 
 
     def open_file(self):
-        filename = fd.askdirectory()
+        file_name = fd.askdirectory()
         new_app = self.new_editor(
             self.editor.width_tile,
             self.editor.height_tile, 
             self.editor.tile_size
         )
-        new_app.file_name = filename
-        new_app.editor.tile_groups.load_images(os.path.join(filename, "tile_sets"))
+        new_app.file_name = file_name
+        if file_name == "": return
+        new_app.editor.tile_groups.load_images(os.path.join(file_name, "tile_sets"))
         groups = new_app.editor.tile_groups.groups
-        new_app.editor.canvas.tile_map.load(filename, groups)
+        new_app.editor.canvas.tile_map.load(file_name, groups)
         new_app.editor.tile_groups.create_tile_group_grids()
         new_app.editor.tile_groups.create_tile_group_lists()
         new_app.mainloop()
 
         return
-        if filename:
-            ext = os.path.splitext(filename)[-1]
+        if file_name:
+            ext = os.path.splitext(file_name)[-1]
 
             if ext == ".json":
-                with open(filename, "r") as file:
+                with open(file_name, "r") as file:
                     tile_map = json.load(file)
                 
                 new_app = self.new_editor(

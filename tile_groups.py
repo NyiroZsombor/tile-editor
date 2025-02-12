@@ -1,5 +1,6 @@
 import os
 import tkinter as tk
+import tkinter.filedialog as fd
 from PIL import Image, ImageTk
 
 class TileGroups(tk.Frame):
@@ -28,11 +29,24 @@ class TileGroups(tk.Frame):
 
         self.top_frame = self.top_frame_setup()
         self.bottom_frame = tk.Frame(self)
+        self.create_tile_group_list()
 
         self.bottom_frame.grid(column=0, row=1, sticky="nsew")
 
 
     def top_frame_setup(self):
+        def on_press():
+            file_name = fd.askopenfilename(defaultextension=".png")
+            print(file_name)
+
+            if file_name == "": return
+
+            name = os.path.splitext(os.path.split(file_name)[1])[0]
+            self.load_image(file_name, name)
+            self.create_tile_group_grid(name)
+            self.add_tile_group_list_entry(name)
+            
+        
         top_frame = tk.Frame(self)
         top_frame.grid(column=0, row=0, sticky="nsew")
 
@@ -41,6 +55,12 @@ class TileGroups(tk.Frame):
             anchor=tk.W, font=("Helvetica", 11, "bold")
         )
         label.pack(side=tk.TOP, fill=tk.X)
+
+        btn = tk.Button(
+            top_frame, text="+ Add Tile Group", pady=2,
+            anchor=tk.W, command=on_press
+        )
+        btn.pack(side=tk.TOP, fill=tk.X)
 
         return top_frame
 
@@ -180,31 +200,63 @@ class TileGroups(tk.Frame):
         self.group_grids[group] = frame
 
 
-    def create_tile_group_lists(self):
+    def create_tile_group_list(self):
         def on_select(event):
             # if self.selected_group is None: return
-            curselection = tile_group_list.curselection()
+            curselection = self.tile_group_list.curselection()
             if not curselection: return
 
             idx = curselection[0]
-            self.select_group(tile_group_list.get(idx))
+            self.select_group(self.tile_group_list.get(idx))
 
 
-        tile_group_list = tk.Listbox(
+        self.tile_group_list = tk.Listbox(
+            self.top_frame, selectmode=tk.BROWSE, justify=tk.CENTER
+        )
+
+        # for group in self.groups.keys():
+        #     self.tile_group_list.insert(tk.END, group)
+        # self.tile_group_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        scroll = tk.Scrollbar(
+            self.tile_group_list, command=self.tile_group_list.yview,
+            cursor="arrow", width=20
+        )
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.tile_group_list.configure(yscrollcommand=scroll.set)
+        self.tile_group_list.bind("<<ListboxSelect>>", on_select)
+
+
+    def add_tile_group_list_entry(self, group):
+        self.tile_group_list.insert(tk.END, group)
+        self.tile_group_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+
+    def create_tile_group_lists(self):
+        def on_select(event):
+            # if self.selected_group is None: return
+            curselection = self.tile_group_list.curselection()
+            if not curselection: return
+
+            idx = curselection[0]
+            self.select_group(self.tile_group_list.get(idx))
+
+
+        self.tile_group_list = tk.Listbox(
             self.top_frame, selectmode=tk.BROWSE, justify=tk.CENTER
         )
 
         for group in self.groups.keys():
-            tile_group_list.insert(tk.END, group)
-        tile_group_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            self.tile_group_list.insert(tk.END, group)
+        self.tile_group_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         scroll = tk.Scrollbar(
-            tile_group_list, command=tile_group_list.yview,
+            self.tile_group_list, command=self.tile_group_list.yview,
             cursor="arrow", width=20
         )
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        tile_group_list.configure(yscrollcommand=scroll.set)
-        tile_group_list.bind("<<ListboxSelect>>", on_select)
+        self.tile_group_list.configure(yscrollcommand=scroll.set)
+        self.tile_group_list.bind("<<ListboxSelect>>", on_select)
 
 
     def select_group(self, group: str):

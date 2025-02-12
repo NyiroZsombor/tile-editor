@@ -37,7 +37,7 @@ class Editor(tk.Frame):
         self.main_editor_frame = self.main_editor_frame_setup()
         # self.file_manager_frame = self.file_manager_frame_setup()
         # self.terminal_frame = self.terminal_frame_setup()
-        self.tile_groups = TileGroups(self, self.tile_size, bg="blue")
+        self.tile_groups = self.tile_groups_frame_setup()
 
 
     def icons_setup(self):
@@ -237,3 +237,10 @@ class Editor(tk.Frame):
                 "Warning! The editor is not meant to be used with images" +
                 "with transparency. You may experience lag."
             )
+
+
+    def tile_groups_frame_setup(self):
+        frame = TileGroups(self, self.tile_size, bg="blue")
+
+
+        return frame
