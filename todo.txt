@@ -1,9 +1,5 @@
 (history)
-(shorcuts)
 (tools (paint bucket))
-collision masks
-better visuals
+(collision masks)
 
 --fixes
-jumping tile groups
-tile group gets deselected (when selecting terminal or editor mode)

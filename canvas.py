@@ -19,8 +19,11 @@ class Canvas(tk.Canvas):
         self.x = 0
         self.y = 0
         self.grabbed = False
+        self.move_selected_tile = False
         self.grab_start_x = 0
         self.grab_start_y = 0
+        self.move_selected_start_x = 0
+        self.move_selected_start_y = 0
         self.tile_map = TileMap(width_tile, height_tile, tile_size)
 
         self.bind("<Button-1>", self.mouse_click)
@@ -39,6 +42,10 @@ class Canvas(tk.Canvas):
             self.grab_start_x = event.x
             self.grab_start_y = event.y
         else:
+            if event.state & 4:
+                self.move_selected = True
+                self.move_selected_start_x = event.x
+                self.move_selected_start_y = event.y
             self.place_tile(event)
 
 
@@ -81,6 +88,7 @@ class Canvas(tk.Canvas):
 
     def mouse_leave(self, event):
         self.grabbed = False
+        self.move_selected_tile = False
 
 
     def change_zoom(self, z):
@@ -89,20 +97,32 @@ class Canvas(tk.Canvas):
         self.zoom *= z
         self.scaled_tile_size = int(self.tile_size * self.zoom)
 
-        # self.x = int(self.x * self.zoom + self.zoom * self.winfo_width() / 2)
-        # self.y = int(self.y * self.zoom + self.zoom * self.winfo_height() / 2)
+        # cam_x = -self.x + self.winfo_width() / 2
+        # cam_y = -self.y + self.winfo_height() / 2
+
+        # print(cam_x, cam_y)
+
+        # cam_x *= self.zoom
+        # cam_y *= self.zoom
+
+        # print(cam_x, cam_y)
+
+        # self.x = int(-cam_x + self.winfo_width() / 2)
+        # self.y = int(-cam_y + self.winfo_height() / 2)
+
+        # print(self.x, self.y)
 
         groups = self.editor.tile_groups.groups
 
         for group in groups.keys():
             for i in range(len(groups[group])):
                 img: Image.Image = groups[group][i]["image"]
-                scaled = img.resize((
+                scaled = ImageTk.PhotoImage(img.resize((
                     self.scaled_tile_size,
                     self.scaled_tile_size,
-                ), Image.Resampling.NEAREST)
+                ), Image.Resampling.NEAREST))
 
-                self.editor.tile_groups.groups[group][i]["scaled"] = ImageTk.PhotoImage(scaled)
+                self.editor.tile_groups.groups[group][i]["scaled"] = scaled
 
 
     def draw(self):
@@ -153,23 +173,11 @@ class Canvas(tk.Canvas):
                 canvas_x = i * self.scaled_tile_size + rem_x
                 canvas_y = j * self.scaled_tile_size + rem_y
 
-                # if self.display_grid: outline = "black"
-                # else: outline = ""
-
                 if not tile is None:
                     img = tile["scaled"]
                     self.create_image(
                         canvas_x, canvas_y, anchor=tk.NW, image=img
                     )
-                # else:
-                #     self.create_rectangle(
-                #         canvas_x, canvas_y,
-                #         canvas_x + self.tile_size,
-                #         canvas_y + self.tile_size,
-                #         fill="lightblue",
-                #         outline=outline
-                #     )
-
 
     def draw_grid(self):
         for i in range(self.winfo_width() // self.scaled_tile_size + 1):

@@ -230,62 +230,35 @@ class App(tk.Tk):
         self.is_saved = True
         if not self.file_name: return self.save_file_as()
 
-        self.save_file_ext(self.file_name)
-
+        self.editor.canvas.tile_map.save(
+            self.file_name, self.editor.tile_groups.tile_set_images
+        )
 
     def save_file_as(self):
         self.is_saved = True
-        filetypes = (("JSON file", "*.json"), ("PNG image", "*.png"))
         file_name = fd.askdirectory()
         if not file_name: return
         self.file_name = file_name
-        self.save_file_ext(self.file_name)
-
-
-    def save_file_ext(self, file_name):
-        ext = os.path.splitext(file_name)[1]
         self.editor.canvas.tile_map.save(
             file_name, self.editor.tile_groups.tile_set_images
         )
 
-        return
-        if ext == ".json":
-            self.editor.canvas.tile_map.save_json(file_name)
-        elif ext == ".png":
-            self.editor.canvas.tile_map.save_image(file_name)
-        else: print("invalid filetype", ext)
-
 
     def open_file(self):
         file_name = fd.askdirectory()
+        if not file_name: return
         new_app = self.new_editor(
             self.editor.width_tile,
             self.editor.height_tile, 
             self.editor.tile_size
         )
         new_app.file_name = file_name
-        if file_name == "": return
         new_app.editor.tile_groups.load_images(os.path.join(file_name, "tile_sets"))
         groups = new_app.editor.tile_groups.groups
         new_app.editor.canvas.tile_map.load(file_name, groups)
         new_app.editor.tile_groups.create_tile_group_grids()
         new_app.editor.tile_groups.create_tile_group_lists()
         new_app.mainloop()
-
-        return
-        if file_name:
-            ext = os.path.splitext(file_name)[-1]
-
-            if ext == ".json":
-                with open(file_name, "r") as file:
-                    tile_map = json.load(file)
-                
-                new_app = self.new_editor(
-                    tile_map["width"], 
-                    tile_map["height"],
-                    tile_map["tile_size"]
-                )
-                new_app.editor.canvas.tile_map.load_json(tile_map["tiles"])
 
 
     def create_settings_json(self):

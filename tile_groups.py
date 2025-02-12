@@ -12,14 +12,14 @@ class TileGroups(tk.Frame):
         self.tile_size = tile_size
         self.selected_group: str | None = None
         self.selected_tile: dict | None = None
-        self.bottom_frame_sizes: dict[str, tuple] = {}
         self.group_grids: dict[str, tk.Frame] = {}
         self.groups: dict[str, list] = {}
+        self.group_sizes: dict[str, tuple[int, int]] = {}
         self.tile_set_images: dict[str, Image.Image] = {}
         self.exception_occured = False
         self.transparency_warning = False
 
-        self.grid(column=2, row=0, sticky="nsew")
+        self.grid(column=1, row=0, sticky="nsew")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=2)
@@ -28,20 +28,19 @@ class TileGroups(tk.Frame):
         # self.create_tile_group_images()
 
         self.top_frame = self.top_frame_setup()
-        self.bottom_frame = tk.Frame(self)
-        self.create_tile_group_list()
-
+        self.bottom_frame  = tk.Frame(self)
         self.bottom_frame.grid(column=0, row=1, sticky="nsew")
+        self.create_tile_group_list()
 
 
     def top_frame_setup(self):
         def on_press():
             file_name = fd.askopenfilename(defaultextension=".png")
-            print(file_name)
 
             if file_name == "": return
+            name, ext = os.path.splitext(os.path.split(file_name)[1])
+            if ext != ".png": return
 
-            name = os.path.splitext(os.path.split(file_name)[1])[0]
             self.load_image(file_name, name)
             self.create_tile_group_grid(name)
             self.add_tile_group_list_entry(name)
@@ -76,10 +75,12 @@ class TileGroups(tk.Frame):
     def load_image(self, path, name):
         img = Image.open(path)
         self.tile_set_images[name] = img
+        tile_width = img.size[0] // self.tile_size
+        tile_height = img.size[1] // self.tile_size
         tiles = []
 
-        for i in range(img.size[1] // self.tile_size):
-            for j in range(img.size[0] // self.tile_size):
+        for i in range(tile_height):
+            for j in range(tile_width):
                 x = j * self.tile_size
                 y = i * self.tile_size
                 box = (x, y, x + self.tile_size, y + self.tile_size)
@@ -90,10 +91,15 @@ class TileGroups(tk.Frame):
                     if tile_img is None: continue
 
                     icon = tile_img.resize((48, 48))
+
+                    scaled = ImageTk.PhotoImage(tile_img.resize((
+                        self.master.canvas.scaled_tile_size,
+                        self.master.canvas.scaled_tile_size,
+                    ), Image.Resampling.NEAREST))
                     
                     tiles.append({
                         "icon": ImageTk.PhotoImage(icon),
-                        "scaled": ImageTk.PhotoImage(tile_img),
+                        "scaled": scaled,
                         "image": tile_img,
                         "id": name + "_" + str(len(tiles))
                     })
@@ -103,26 +109,7 @@ class TileGroups(tk.Frame):
                     print(e)
 
         self.groups[name] = tiles
-
-
-    def load_folders(self, path):
-        groups = os.listdir(path)
-        groups.sort()
-
-        for group in groups:
-            items = os.listdir(os.path.join(path, group))
-            self.groups[group] = []
-
-            for item in items:
-                if os.path.isdir(os.path.join(path, item)): continue
-
-                try:
-                    image = Image.open(os.path.join(path, group, item))
-                    self.try_adding_image(image, group)
-                except Image.UnidentifiedImageError:
-                    print("failed to open image")
-                except IsADirectoryError:
-                    print("failed to open image")
+        self.group_sizes[name] = (tile_width, tile_height)
 
 
     def check_image(self, image: Image.Image):
@@ -171,12 +158,7 @@ class TileGroups(tk.Frame):
             self.selected_tile = event.widget.tile
         
         pad = 2
-        width = self.bottom_frame.winfo_width()
-        height = self.bottom_frame.winfo_height()
-        tile_width = width // (self.tile_size + pad * 2)
-        tile_height = int(height / (self.tile_size + pad * 2))
 
-        self.bottom_frame_sizes[group] = (tile_width, tile_height)
         frame = tk.Frame(self.bottom_frame)
         frame.grid_propagate(False)
 
@@ -184,14 +166,15 @@ class TileGroups(tk.Frame):
 
         for i in range(len(current_group)):
             tile = current_group[i]
+            if (i + i // self.group_sizes[group][0]) % 2 == 0:
+                color = "darkgray"
+            else:
+                color = "lightgray"
 
-            label = tk.Label(
-                frame, image=tile["icon"],
-                bg="darkgray" if (i + i // tile_width) % 2 == 0 else "lightgray"
-            )
+            label = tk.Label(frame, image=tile["icon"], bg=color)
             label.grid(
-                column=i % tile_width, row=i // tile_width, sticky="nsew",
-                padx=pad, pady=pad
+                column=i % self.group_sizes[group][0],  padx=pad, pady=pad,
+                row=i // self.group_sizes[group][0], sticky="nsew",
             )
 
             label.tile = tile
@@ -201,8 +184,7 @@ class TileGroups(tk.Frame):
 
 
     def create_tile_group_list(self):
-        def on_select(event):
-            # if self.selected_group is None: return
+        def on_select(_):
             curselection = self.tile_group_list.curselection()
             if not curselection: return
 

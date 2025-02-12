@@ -18,7 +18,6 @@ class Preferences(tk.Toplevel):
 
         color_picker_frame = self.colorpicker_frame_setup()
         startup_settings_frame = self.startup_settings_frame_setup()
-        file_paths_frame = self.file_paths_frame_setup()
 
 
     def create_preference(self, title):
@@ -116,50 +115,3 @@ class Preferences(tk.Toplevel):
         main_frame = self.create_preference("Show Warnings on Startup")
         create_btn("Show Warnings on Startup", "startup_warnings")
         create_btn("Pompt File Open on Startup", "startup_open")
-
-
-    def file_paths_frame_setup(self):
-        def on_click(label):
-            directory = fd.askdirectory(title=label.title)
-            if not directory: return
-            label.configure(text=label.title + ": " + directory)
-            
-            # self.editor.file_manager_path = directory
-            # new_frame = self.editor.file_manager_frame_setup()
-            # self.editor.file_manager_frame = new_frame
-
-            # print(directory)
-            self.editor.tile_group_path = directory
-            new_frame = self.editor.tile_group_frame_setup()
-            self.editor.tile_group_frame = new_frame
-            self.editor.create_tile_group_grid()
-
-        def create_label(title, setting):
-            label = tk.Label(
-                main_frame.frame, bg=default_color, padx=4, pady=4, border=2
-            )
-            label.pack(pady=4)
-            label.title = title + ": "
-            label.configure(text=(
-                label.title + self.master.settings[setting]
-            ))
-
-            label.bind("<Button-1>",
-                lambda _: on_click(label)
-            )
-            label.bind("<Enter>",
-                lambda _: label.configure(bg=highlight_color)
-            )
-            label.bind("<Leave>",
-                lambda _: label.configure(bg=default_color)
-            )
-
-        main_frame = self.create_preference("File Paths")
-
-        default_color = "#EEE"
-        highlight_color = "#FFF"
-        
-        # create_label("File Manager", "file_manager_path")
-        create_label("Tiles", "tiles_path")
-
-        return main_frame

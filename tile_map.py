@@ -33,6 +33,21 @@ class TileMap:
         0 <= y < self.height)
     
 
+    def save(self, path, tile_set_images: dict[str, Image.Image]):
+        self.create_path(path)
+        self.create_path(os.path.join(path, "tile_sets"))
+
+        self.save_image(self.get_file_with_ext(path, ".png"))
+        self.save_json(self.get_file_with_ext(path, ".json"))
+        
+        if not os.path.exists(path) or not os.path.isdir(path):
+            os.mkdir(path)
+
+        for group in tile_set_images.keys():
+            img_path = os.path.join(path, "tile_sets", group + ".png")
+            tile_set_images[group].save(img_path)
+    
+
     def save_json(self, path):
         tile_map = {
             "width": self.width,
@@ -66,31 +81,6 @@ class TileMap:
                 img.paste(tile["image"], box)
 
         img.save(path)
-    
-
-    def load_json(self, tiles):
-        self.tiles = tiles
-
-
-    def save(self, path, tile_set_images: dict[str, Image.Image]):
-        self.create_path(path)
-        self.create_path(os.path.join(path, "tile_sets"))
-
-        self.save_image(self.get_file_with_ext(path, ".png"))
-        self.save_json(self.get_file_with_ext(path, ".json"))
-        
-        if not os.path.exists(path) or not os.path.isdir(path):
-            os.mkdir(path)
-
-        for group in tile_set_images.keys():
-            img_path = os.path.join(path, "tile_sets", group + ".png")
-            tile_set_images[group].save(img_path)
-
-
-    @staticmethod
-    def create_path(path):
-       if not os.path.exists(path) or not os.path.isdir(path):
-            os.mkdir(path) 
 
 
     def load(self, path, groups: dict[str, list[Image.Image]]):
@@ -109,6 +99,12 @@ class TileMap:
 
         except Exception as e:
             print(e)
+
+
+    @staticmethod
+    def create_path(path):
+       if not os.path.exists(path) or not os.path.isdir(path):
+            os.mkdir(path) 
 
     @staticmethod
     def get_file_with_ext(path, ext, file_name=None) -> str:
