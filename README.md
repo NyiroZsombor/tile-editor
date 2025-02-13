@@ -5,16 +5,17 @@ Then install necessary Python packeges
 
 Using pip [pip](https://pip.pypa.io/en/stable/):
 ```bash
-pip install Pillow
+pip install pillow ttkthemes
 ```
 On Linux
 ```bash
-sudo apt install python3-pil python3-pil.imagetk
+sudo apt install python3-pil python3-pil.imagetk python3-ttkthemes
 ```
+(instead of apt you can use your systems's package manager)
 
 ## Usage
 
-Run the main.py file with python. Open a terminal in Tile Editor folder
+Run the main.py file with python. One way is to open a terminal in the Tile Editor folder then run main.py.
 
 On Windows:
 ```bash
@@ -25,4 +26,4 @@ On Linux
 python3 main.py
 ```
 
-Move the cursor with Shift + Left Click. Select a tile to be placed on the right. Remove tiles with Right Click
+Move the cursor with Shift + Left Click. Open a tile group (tileset) with the button on the right, then select a tile to be placed. Remove tiles with Right Click
