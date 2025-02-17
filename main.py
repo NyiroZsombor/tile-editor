@@ -31,7 +31,7 @@ class App(tk.Tk):
 
         style.configure("Treeview", rowheight=24)
         
-        self.title("Tile Editor")
+        self.title("SimpleTiles")
 
         self.screen_width = self.winfo_screenwidth()
         self.screen_height = self.winfo_screenheight()
