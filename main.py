@@ -40,9 +40,19 @@ class App(tk.Tk):
         self.columnconfigure(0, weight=1)
 
         if self.op_sys == "x11":
+            self.icon = tk.PhotoImage(file="icons/icon.png")
             self.attributes("-zoomed", True)
         else:
+            if self.op_sys == "win32":
+                self.icon = tk.PhotoImage(file="icons/icon.ico")
+            else:
+                self.icon = tk.PhotoImage(file="icons/icon.icns")
             self.state("zoomed")
+
+        try:
+            self.iconphoto(True, self.icon)
+        except Exception as e:
+            print("failed to set icon:", e)
         self.minsize(1280, 720)
 
         self.preferences = None
